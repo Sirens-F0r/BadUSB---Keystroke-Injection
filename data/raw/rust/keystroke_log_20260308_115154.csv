@@ -1,0 +1,13 @@
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+3572.7906000000003,ShiftLeft,down,modifier,true,20260308_115154,uew_fewg_s1
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+3724.5234,MetaLeft,down,modifier,true,20260308_115154,uew_fewg_s1
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+3884.1504000000004,KeyS,down,alpha,false,20260308_115154,uew_fewg_s1
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+4003.8402,MetaLeft,up,modifier,true,20260308_115154,uew_fewg_s1
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+4019.641,KeyS,up,alpha,false,20260308_115154,uew_fewg_s1
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+4035.6167000000005,ShiftLeft,up,modifier,true,20260308_115154,uew_fewg_s1

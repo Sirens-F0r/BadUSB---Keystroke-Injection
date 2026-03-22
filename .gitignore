@@ -1,0 +1,46 @@
+# Rust build artifacts
+/kds_guard/target/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# Data files (giữ cấu trúc, không track data thật)
+/data/*.csv
+/data/*.parquet
+!/data/.gitkeep
+
+# Models
+/models/*.pkl
+/models/*.joblib
+!/models/.gitkeep
+
+# Plots
+/plots/*.png
+/plots/*.jpg
+/plots/*.svg
+!/plots/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log

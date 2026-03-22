@@ -1,0 +1,55 @@
+# KDS Guard Configuration
+# Cấu hình cho hệ thống phát hiện BadUSB
+
+[collector]
+# Có lưu key_code chi tiết không (false = chỉ lưu key_class để bảo mật)
+log_key_code = true
+# Thư mục lưu dữ liệu
+output_dir = "data"
+# Tiền tố file log
+file_prefix = "keystroke_log"
+
+[feature]
+# Kích thước cửa sổ trượt (số phím)
+window_size = 40
+# Bước trượt
+slide_step = 20
+# Ngưỡng burst (ms)
+burst_threshold_ms = 50.0
+# Số phím tối thiểu tạo thành burst
+burst_min_keys = 10
+
+[detector]
+# Ngưỡng Flight Time trung bình (ms) - dưới ngưỡng = đáng ngờ
+ft_mean_threshold_ms = 30.0
+# Ngưỡng CV Flight Time - dưới ngưỡng = gõ đều bất thường
+ft_cv_threshold = 0.15
+# Tốc độ gõ tối đa cho người thường (keys/s)
+max_human_speed = 15.0
+# Ngưỡng burst length
+burst_length_threshold = 15
+# Ngưỡng Hold Time IQR (ms)
+ht_iqr_threshold_ms = 5.0
+# Ngưỡng modifier ratio
+modifier_ratio_threshold = 0.4
+
+[detector.thresholds]
+# Ngưỡng risk score
+medium = 0.3
+high = 0.6
+critical = 0.8
+
+[detector.weights]
+# Trọng số hybrid (rule vs ML)
+rule = 1.0
+anomaly = 0.0
+
+[policy]
+# Bật/tắt các chế độ phản ứng
+enable_alerts = true
+enable_soft_block = false
+enable_challenge = false
+# Thời gian soft block (ms)
+soft_block_duration_ms = 2000
+# Cooldown giữa các cảnh báo (ms)
+alert_cooldown_ms = 5000

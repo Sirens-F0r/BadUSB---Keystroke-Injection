@@ -1,0 +1,80 @@
+{
+  "timestamp": "2026-03-08T10:54:08.226832",
+  "feature_columns": [
+    "mean_hold_time",
+    "std_hold_time",
+    "median_hold_time",
+    "iqr_hold_time",
+    "mean_flight_time",
+    "std_flight_time",
+    "median_flight_time",
+    "iqr_flight_time",
+    "p5_flight_time",
+    "p95_flight_time",
+    "min_flight_time",
+    "cv_flight_time",
+    "typing_speed",
+    "modifier_ratio",
+    "special_ratio",
+    "max_burst_length"
+  ],
+  "n_samples": 21035,
+  "has_labels": true,
+  "results": [
+    {
+      "model_name": "Isolation Forest",
+      "accuracy": 0.90729736154029,
+      "f1_score": 0.1908713692946058,
+      "auc_roc": 0.9941590127791188,
+      "precision_injection": 0.10550458715596331,
+      "recall_injection": 1.0,
+      "confusion_matrix": [
+        [
+          3771,
+          390
+        ],
+        [
+          0,
+          46
+        ]
+      ]
+    },
+    {
+      "model_name": "One-Class SVM",
+      "accuracy": 0.8970763014024246,
+      "f1_score": 0.17523809523809525,
+      "auc_roc": 0.996102525521666,
+      "precision_injection": 0.09603340292275574,
+      "recall_injection": 1.0,
+      "confusion_matrix": [
+        [
+          3728,
+          433
+        ],
+        [
+          0,
+          46
+        ]
+      ]
+    },
+    {
+      "model_name": "Random Forest",
+      "accuracy": 1.0,
+      "f1_score": 1.0,
+      "auc_roc": 1.0,
+      "precision_injection": 1.0,
+      "recall_injection": 1.0,
+      "confusion_matrix": [
+        [
+          4161,
+          0
+        ],
+        [
+          0,
+          46
+        ]
+      ]
+    }
+  ],
+  "contamination": 0.1
+}

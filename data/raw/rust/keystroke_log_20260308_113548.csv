@@ -1,0 +1,17 @@
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+47.7199,ShiftRight,up,modifier,true,20260308_113548,duong_thanh_mong_s1
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+87.6679,Minus,up,other,false,20260308_113548,duong_thanh_mong_s1
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+3080.4149,ControlLeft,down,modifier,true,20260308_113548,duong_thanh_mong_s1
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+3176.3208999999997,KeyZ,down,alpha,false,20260308_113548,duong_thanh_mong_s1
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+3295.6274,KeyZ,up,alpha,false,20260308_113548,duong_thanh_mong_s1
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+3359.5619,ControlLeft,up,modifier,true,20260308_113548,duong_thanh_mong_s1
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+4256.3005,ControlLeft,down,modifier,true,20260308_113548,duong_thanh_mong_s1
+timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
+4455.89,KeyC,down,alpha,false,20260308_113548,duong_thanh_mong_s1
