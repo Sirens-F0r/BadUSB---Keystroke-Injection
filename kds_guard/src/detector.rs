@@ -1,28 +1,18 @@
-//! Module phát hiện bất thường (Detection Engine)
-//!
-//! Tầng A: Rule-based detection
-//! Tầng B: Anomaly score (chuẩn bị cho tích hợp ML)
-//! Tầng C: Hybrid scoring
+// Phat hien bat thuong bang rule-based va hybrid scoring
 
 use crate::feature::FeatureVector;
 
-/// Mức độ rủi ro
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum RiskLevel {
-    /// Bình thường, cho qua
     Normal,
-    /// Đáng ngờ, cần theo dõi
     Low,
-    /// Cảnh báo mềm, ghi log
     Medium,
-    /// Nguy hiểm, cần chặn
     High,
-    /// Rất nguy hiểm, chặn ngay
     Critical,
 }
 
 impl RiskLevel {
-    /// Chuyển thành chuỗi hiển thị
+
     pub fn as_str(&self) -> &str {
         match self {
             RiskLevel::Normal => "NORMAL",
@@ -33,7 +23,7 @@ impl RiskLevel {
         }
     }
 
-    /// Chuyển thành emoji
+
     pub fn emoji(&self) -> &str {
         match self {
             RiskLevel::Normal => "✅",
@@ -45,73 +35,42 @@ impl RiskLevel {
     }
 }
 
-/// Kết quả phát hiện
 #[derive(Debug, Clone)]
 pub struct DetectionResult {
-    /// Điểm rủi ro tổng hợp (0.0 - 1.0)
     pub risk_score: f64,
-    /// Mức độ rủi ro
     pub risk_level: RiskLevel,
-    /// Điểm rule-based (0.0 - 1.0)
     pub rule_score: f64,
-    /// Các lý do phát hiện
     pub reasons: Vec<String>,
-    /// Timestamp cửa sổ
     pub window_start_ms: f64,
     pub window_end_ms: f64,
 }
 
-/// Cấu hình ngưỡng cho Detector
 #[derive(Debug, Clone)]
 pub struct DetectorConfig {
-    // === Ngưỡng Flight Time ===
-    /// Flight time trung bình quá thấp → injection
     pub ft_mean_threshold_ms: f64,
-    /// CV Flight Time quá thấp → gõ đều bất thường
     pub ft_cv_threshold: f64,
-
-    // === Ngưỡng tốc độ ===
-    /// Tốc độ gõ tối đa cho người thường (keys/s)
     pub max_human_speed: f64,
-
-    // === Ngưỡng burst ===
-    /// Burst quá dài → injection
     pub burst_length_threshold: usize,
-
-    // === Ngưỡng Hold Time ===
-    /// Hold time IQR quá thấp → gõ đều bất thường
     pub ht_iqr_threshold_ms: f64,
-
-    // === Ngưỡng modifier ===
-    /// Tỉ lệ modifier cao bất thường
     pub modifier_ratio_threshold: f64,
-
-    // === Trọng số hybrid ===
-    /// Trọng số rule-based trong hybrid score
     pub rule_weight: f64,
-    /// Trọng số anomaly trong hybrid score (dành cho ML sau này)
     pub anomaly_weight: f64,
-
-    // === Ngưỡng quyết định ===
-    /// Ngưỡng cảnh báo mềm
     pub threshold_medium: f64,
-    /// Ngưỡng cảnh báo mạnh
     pub threshold_high: f64,
-    /// Ngưỡng chặn
     pub threshold_critical: f64,
 }
 
 impl Default for DetectorConfig {
     fn default() -> Self {
         Self {
-            ft_mean_threshold_ms: 30.0,   // < 30ms = rất nhanh
-            ft_cv_threshold: 0.15,         // CV < 0.15 = đều bất thường
-            max_human_speed: 15.0,         // > 15 keys/s = siêu nhanh
-            burst_length_threshold: 15,    // > 15 phím burst = đáng ngờ
-            ht_iqr_threshold_ms: 5.0,      // IQR < 5ms = đều bất thường
-            modifier_ratio_threshold: 0.4, // > 40% modifier = lạ
-            rule_weight: 1.0,              // Giai đoạn đầu chỉ dùng rule
-            anomaly_weight: 0.0,           // ML chưa triển khai
+            ft_mean_threshold_ms: 30.0,
+            ft_cv_threshold: 0.15,
+            max_human_speed: 20.0,
+            burst_length_threshold: 15,
+            ht_iqr_threshold_ms: 5.0,
+            modifier_ratio_threshold: 0.4,
+            rule_weight: 1.0,
+            anomaly_weight: 0.0,
             threshold_medium: 0.3,
             threshold_high: 0.6,
             threshold_critical: 0.8,
@@ -119,23 +78,20 @@ impl Default for DetectorConfig {
     }
 }
 
-/// Rule-based Detector
 pub struct Detector {
     config: DetectorConfig,
 }
 
 impl Detector {
-    /// Tạo Detector mới với config
     pub fn new(config: DetectorConfig) -> Self {
         Self { config }
     }
 
-    /// Phân tích một feature vector và trả về kết quả phát hiện
     pub fn analyze(&self, features: &FeatureVector) -> DetectionResult {
         let mut score: f64 = 0.0;
         let mut reasons: Vec<String> = Vec::new();
 
-        // === Rule 1: Flight Time trung bình quá thấp ===
+        // Rule 1: Flight Time qua nhanh
         if features.mean_flight_time > 0.0
             && features.mean_flight_time < self.config.ft_mean_threshold_ms
         {
@@ -147,7 +103,7 @@ impl Detector {
             ));
         }
 
-        // === Rule 2: CV Flight Time quá thấp (gõ đều như máy) ===
+        // Rule 2: CV qua thap (go deu nhu may)
         if features.cv_flight_time > 0.0
             && features.cv_flight_time < self.config.ft_cv_threshold
         {
@@ -159,18 +115,23 @@ impl Detector {
             ));
         }
 
-        // === Rule 3: Tốc độ gõ vượt ngưỡng người thường ===
-        if features.typing_speed > self.config.max_human_speed {
+        // Rule 3: Toc do vuot nguong
+        // Ket hop: speed > 20 keys/s VA mean_flight_time < 50ms
+        // Tranh false positive voi nguoi go nhanh nhung co nhip tu nhien
+        if features.typing_speed > self.config.max_human_speed
+            && features.mean_flight_time < 50.0
+        {
             let excess = features.typing_speed / self.config.max_human_speed;
             let contribution = (0.2 * excess).min(0.35);
             score += contribution;
             reasons.push(format!(
-                "Tốc độ gõ bất thường: {:.1} keys/s (ngưỡng: {:.1})",
-                features.typing_speed, self.config.max_human_speed
+                "Tốc độ gõ bất thường: {:.1} keys/s (ngưỡng: {:.1}), ft={:.1}ms",
+                features.typing_speed, self.config.max_human_speed,
+                features.mean_flight_time
             ));
         }
 
-        // === Rule 4: Burst pattern ===
+        // Rule 4: Burst pattern
         if features.has_burst && features.max_burst_length >= self.config.burst_length_threshold {
             let contribution = 0.2;
             score += contribution;
@@ -180,7 +141,7 @@ impl Detector {
             ));
         }
 
-        // === Rule 5: Hold Time quá đều ===
+        // Rule 5: Hold Time qua deu
         if features.iqr_hold_time > 0.0
             && features.iqr_hold_time < self.config.ht_iqr_threshold_ms
         {
@@ -192,7 +153,7 @@ impl Detector {
             ));
         }
 
-        // === Rule 6: Tỉ lệ modifier bất thường ===
+        // Rule 6: Ti le modifier
         if features.modifier_ratio > self.config.modifier_ratio_threshold {
             let contribution = 0.1;
             score += contribution;
@@ -203,7 +164,7 @@ impl Detector {
             ));
         }
 
-        // === Rule 7: Min flight time cực thấp ===
+        // Rule 7: Min flight time cuc thap
         if features.min_flight_time > 0.0 && features.min_flight_time < 5.0 {
             let contribution = 0.1;
             score += contribution;
@@ -213,15 +174,30 @@ impl Detector {
             ));
         }
 
-        // Giới hạn score trong [0, 1]
+        // Rule 8: Injection Fingerprint — khoang nghi deu giua cac cum go nhanh + Enter sau burst
+        if features.inter_command_pause_count >= 2 && features.pause_regularity < 0.3 {
+            let mut contribution = 0.15;
+            if features.enter_after_burst > 0.3 {
+                contribution += 0.1; // bonus: Enter sau burst = dang chay script tung dong
+            }
+            score += contribution;
+            reasons.push(format!(
+                "Injection fingerprint: {} khoảng nghỉ đều (CV={:.2}), Enter/burst={:.0}%",
+                features.inter_command_pause_count,
+                features.pause_regularity,
+                features.enter_after_burst * 100.0
+            ));
+        }
+
+
         let rule_score = score.min(1.0);
 
-        // Hybrid score (hiện tại chỉ rule-based)
+        // Hybrid score
         let risk_score = (self.config.rule_weight * rule_score
             + self.config.anomaly_weight * 0.0)
             / (self.config.rule_weight + self.config.anomaly_weight).max(1.0);
 
-        // Xác định mức rủi ro
+
         let risk_level = if risk_score >= self.config.threshold_critical {
             RiskLevel::Critical
         } else if risk_score >= self.config.threshold_high {
@@ -275,6 +251,9 @@ mod tests {
             min_flight_time: 80.0,
             p5_flight_time: 100.0,
             p95_flight_time: 350.0,
+            inter_command_pause_count: 0,
+            pause_regularity: 1.0,
+            enter_after_burst: 0.0,
         }
     }
 
@@ -300,6 +279,9 @@ mod tests {
             min_flight_time: 18.0,
             p5_flight_time: 19.0,
             p95_flight_time: 22.0,
+            inter_command_pause_count: 5,
+            pause_regularity: 0.08,
+            enter_after_burst: 0.6,
         }
     }
 

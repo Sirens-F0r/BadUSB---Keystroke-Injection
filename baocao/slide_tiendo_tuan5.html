@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Báo cáo tiến độ Tuần 5 — KDS Guard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue: #1a56db;
+  --blue-light: #e8effc;
+  --blue-dark: #0f3a8a;
+  --green: #059669;
+  --green-bg: #ecfdf5;
+  --yellow: #d97706;
+  --yellow-bg: #fefce8;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-500: #6b7280;
+  --gray-700: #374151;
+  --gray-900: #111827;
+  --border: #e5e7eb;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: #fff;
+  color: var(--gray-900);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  -webkit-font-smoothing: antialiased;
+}
+
+.slide-container { width: 100vw; height: 100vh; position: relative; }
+
+.slide {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: none;
+  flex-direction: column;
+  background: #fff;
+  overflow: hidden;
+}
+.slide.active { display: flex; }
+
+/* ===== SLIDE HEADER BAR ===== */
+.slide-bar {
+  height: 5px;
+  background: linear-gradient(90deg, var(--blue), #6366f1);
+  flex-shrink: 0;
+}
+
+.slide-top {
+  display: flex;
+  align-items: center;
+  padding: 10px 40px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--gray-50);
+}
+
+.slide-num {
+  background: var(--blue);
+  color: #fff;
+  min-width: 30px; height: 30px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  margin-right: 14px;
+  flex-shrink: 0;
+}
+
+.slide-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--blue-dark);
+  flex: 1;
+}
+
+/* QUAN TRỌNG: Không cho scroll, nội dung phải vừa 1 trang */
+.slide-body {
+  flex: 1;
+  padding: 16px 40px 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== COVER ===== */
+.cover {
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8effc 40%, #f5f3ff 100%);
+  padding: 0;
+}
+
+.cover-inner {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 24px 48px;
+  gap: 40px;
+}
+
+.cover-img {
+  flex: 0 0 360px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cover-img img {
+  width: 100%;
+  max-height: 100%;
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(26,86,219,0.2);
+  object-fit: contain;
+}
+
+.cover-text { flex: 1; }
+
+.cover-label {
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--blue);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.cover-heading {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--gray-900);
+  line-height: 1.25;
+  margin-bottom: 20px;
+}
+
+.cover-heading span { color: var(--blue); }
+
+/* GVHD riêng biệt - không nằm trong bảng */
+.cover-gvhd {
+  font-size: 15px;
+  color: var(--gray-700);
+  margin-bottom: 14px;
+  padding: 10px 16px;
+  background: rgba(26,86,219,0.06);
+  border-left: 4px solid var(--blue);
+  border-radius: 0 8px 8px 0;
+}
+.cover-gvhd strong {
+  color: var(--blue-dark);
+}
+
+.cover-table {
+  margin-bottom: 20px;
+}
+
+.cover-table td, .cover-table th {
+  padding: 7px 14px;
+  font-size: 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.cover-table th {
+  color: var(--blue-dark);
+  font-weight: 600;
+  background: rgba(26,86,219,0.06);
+}
+
+.cover-badge {
+  display: inline-block;
+  background: var(--blue);
+  color: #fff;
+  padding: 10px 28px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+/* ===== TABLES ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th {
+  background: var(--blue-light);
+  color: var(--blue-dark);
+  font-weight: 600;
+  padding: 7px 10px;
+  text-align: left;
+  border-bottom: 2px solid var(--blue);
+  white-space: nowrap;
+}
+
+td {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  line-height: 1.45;
+}
+
+tr:nth-child(even) td { background: var(--gray-50); }
+.row-highlight td { background: rgba(26,86,219,0.06) !important; font-weight: 500; }
+
+/* ===== BADGES ===== */
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tag-done { background: var(--green-bg); color: var(--green); }
+.tag-wip { background: var(--yellow-bg); color: var(--yellow); }
+.tag-draft { background: var(--blue-light); color: var(--blue); }
+.tag-high { background: var(--red-bg); color: var(--red); }
+
+/* ===== SECTION ===== */
+.section {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--blue-dark);
+  margin: 10px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--blue-light);
+}
+
+.section:first-child { margin-top: 0; }
+
+p { font-size: 13px; line-height: 1.55; margin-bottom: 5px; }
+
+ul { padding-left: 18px; margin-bottom: 6px; }
+ul li { font-size: 13px; line-height: 1.55; margin-bottom: 2px; }
+
+/* ===== PIPELINE ===== */
+.pipeline {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 8px 0;
+}
+
+.pipe-step {
+  flex: 1;
+  background: var(--gray-50);
+  border: 1px solid var(--border);
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.pipe-step:first-child { border-radius: 8px 0 0 8px; }
+.pipe-step:last-child { border-radius: 0 8px 8px 0; }
+
+.pipe-step .pipe-num { font-size: 10px; color: var(--gray-500); font-weight: 600; }
+.pipe-step .pipe-name { font-size: 12px; font-weight: 700; color: var(--blue-dark); margin: 2px 0; }
+.pipe-step .pipe-desc { font-size: 10px; color: var(--gray-500); }
+
+.pipe-arrow {
+  display: flex; align-items: center;
+  font-size: 16px; color: var(--blue); font-weight: 700; padding: 0 2px;
+}
+
+/* ===== TWO COLUMNS ===== */
+.cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ===== STAT CARDS ===== */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.stat {
+  background: var(--gray-50);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+}
+
+.stat-val { font-size: 18px; font-weight: 800; color: var(--blue); }
+.stat-label { font-size: 10px; color: var(--gray-500); margin-top: 2px; }
+
+/* ===== RISK LEVELS ===== */
+.levels {
+  display: flex;
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.level {
+  flex: 1;
+  padding: 7px 4px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ===== IMAGE GRID ===== */
+.img-grid {
+  display: grid;
+  gap: 8px;
+  margin: 6px 0;
+  flex: 1;
+  min-height: 0;
+}
+
+.img-grid.g2 { grid-template-columns: 1fr 1fr; }
+.img-grid.g3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.img-box {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--gray-50);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.img-box img {
+  width: 100%;
+  display: block;
+  object-fit: contain;
+  flex: 1;
+  min-height: 0;
+  background: var(--gray-100);
+}
+
+.img-box .img-cap {
+  padding: 5px 8px;
+  font-size: 11px;
+  color: var(--gray-500);
+  text-align: center;
+  background: var(--gray-50);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* ===== ALERT BOX ===== */
+.note {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin: 6px 0;
+  line-height: 1.45;
+}
+
+.note-warn { background: var(--yellow-bg); border-left: 4px solid var(--yellow); }
+.note-info { background: var(--blue-light); border-left: 4px solid var(--blue); }
+.note-ok { background: var(--green-bg); border-left: 4px solid var(--green); }
+.note-err { background: var(--red-bg); border-left: 4px solid var(--red); }
+
+/* ===== DEMO BOX ===== */
+.term {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 5px 0;
+}
+.term .t-green { color: #a6e3a1; }
+.term .t-red { color: #f38ba8; }
+.term .t-yellow { color: #f9e2af; }
+.term .t-blue { color: #89b4fa; }
+
+/* ===== NAV ===== */
+.nav {
+  position: fixed;
+  bottom: 10px; right: 16px;
+  display: flex; align-items: center; gap: 8px;
+  z-index: 100;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.nav button {
+  background: var(--blue); border: none; color: #fff;
+  width: 28px; height: 28px; border-radius: 6px;
+  cursor: pointer; font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.nav button:hover { background: var(--blue-dark); }
+
+.nav .counter {
+  font-size: 12px; color: var(--gray-500);
+  font-weight: 500; min-width: 45px; text-align: center;
+}
+
+/* ===== PROGRESS ===== */
+.progress {
+  position: fixed; top: 0; left: 0;
+  height: 3px; background: var(--blue);
+  transition: width 0.3s ease; z-index: 100;
+}
+
+code {
+  background: var(--gray-100);
+  padding: 1px 5px; border-radius: 3px;
+  font-size: 11px; font-family: 'Consolas', monospace;
+}
+
+strong { font-weight: 600; }
+
+@media print {
+  .slide { page-break-after: always; display: flex !important; position: relative; height: 100vh; }
+  .nav, .progress { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progressBar"></div>
+<div class="slide-container">
+
+<!-- ==================== SLIDE 1: TRANG BÌA ==================== -->
+<div class="slide cover active" data-index="0">
+  <div class="slide-bar"></div>
+  <div class="cover-inner">
+    <div class="cover-img">
+      <img src="baocao/images/daidien.png" alt="KDS Guard - BadUSB Detection">
+    </div>
+    <div class="cover-text">
+      <div class="cover-label">Đồ án cơ sở — Trường Đại học Công nghệ TP.HCM</div>
+      <div class="cover-heading">
+        Phát hiện và ngăn chặn <span>Keystroke từ BadUSB</span> thông qua phân tích hành vi gõ phím
+      </div>
+      <div class="cover-gvhd">
+        GVHD: <strong>TS. Văn Thiên Hoàng</strong>
+      </div>
+      <table class="cover-table">
+        <tr><th>Vai trò</th><th>Họ tên</th><th>Lớp</th><th>MSSV</th></tr>
+        <tr><td>Sinh viên 1</td><td>Võ Yến Nhi</td><td>23DATA1</td><td>2387700049</td></tr>
+        <tr><td>Sinh viên 2</td><td>Dương Thanh Mộng</td><td>23DATA1</td><td>2387700044</td></tr>
+      </table>
+      <div class="cover-badge">BÁO CÁO TIẾN ĐỘ — TUẦN 5</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 2: TÓM TẮT ĐỀ TÀI ==================== -->
+<div class="slide" data-index="1">
+  <div class="slide-bar"></div>
+  <div class="slide-top"><div class="slide-num">2</div><div class="slide-title">1. Tóm tắt đề tài</div></div>
+  <div class="slide-body">
+    <div class="cols">
+      <div>
+        <div class="section">Vấn đề</div>
+        <ul>
+          <li>BadUSB là thiết bị USB <strong>giả mạo bàn phím</strong> (HID), tự động gõ lệnh độc hại chỉ trong vài giây</li>
+          <li>Antivirus <strong>không phát hiện được</strong> vì hoạt động ở tầng firmware</li>
+          <li>MITRE ATT&CK: <strong>T1674 — Removable Media</strong></li>
+          <li>FBI cảnh báo nhóm <strong>FIN7</strong> tấn công doanh nghiệp Mỹ (2022)</li>
+        </ul>
+
+        <div class="section">Giải pháp: Keystroke Dynamics</div>
+        <table>
+          <tr><th>Đặc điểm</th><th>Người thật</th><th>BadUSB</th></tr>
+          <tr><td>Tốc độ gõ</td><td>3–8 phím/giây</td><td>20–200 phím/giây</td></tr>
+          <tr><td>Nhịp gõ</td><td>Không đều, tự nhiên</td><td>Rất đều, cố định</td></tr>
+          <tr><td>Giữ phím</td><td>80–200ms</td><td>5–15ms</td></tr>
+          <tr><td>Gõ sai / xóa</td><td>Thường xuyên</td><td>Không bao giờ</td></tr>
+        </table>
+        <div class="note note-ok"><strong>Kết luận:</strong> Đo thời gian nhấn/thả phím = phân biệt người thật vs thiết bị giả mạo.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;justify-content:center">
+        <div class="img-box" style="flex:1;min-height:0">
+          <img src="baocao/images/hinh_2_1_kien_truc_he_thong.png" alt="Kiến trúc hệ thống">
+          <div class="img-cap">Kiến trúc tổng thể hệ thống KDS Guard</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 3: TỔNG QUAN HỆ THỐNG ==================== -->
+<div class="slide" data-index="2">
+  <div class="slide-bar"></div>
+  <div class="slide-top"><div class="slide-num">3</div><div class="slide-title">2. Tổng quan hệ thống đã xây dựng</div></div>
+  <div class="slide-body">
+    <table style="font-size:12.5px">
+      <tr><th>#</th><th>Hạng mục</th><th>Trạng thái</th><th>Chi tiết</th></tr>
+      <tr><td>1</td><td>Keystroke Collector (Rust)</td><td><span class="tag tag-done">Hoàn thành</span></td><td>6 modules, binary 2MB</td></tr>
+      <tr><td>2</td><td>Feature Extraction (Python)</td><td><span class="tag tag-done">Hoàn thành</span></td><td>16 đặc trưng chuẩn hóa</td></tr>
+      <tr><td>3</td><td>Detection Engine (Rule-based)</td><td><span class="tag tag-done">Hoàn thành</span></td><td>7 luật phát hiện</td></tr>
+      <tr><td>4</td><td>ML Models (Train + Eval)</td><td><span class="tag tag-done">Hoàn thành</span></td><td>IF + OCSVM + RF — 21,035 mẫu</td></tr>
+      <tr><td>5</td><td>Response / Policy Engine</td><td><span class="tag tag-done">Hoàn thành</span></td><td>5 mức phản ứng</td></tr>
+      <tr><td>6</td><td>Dashboard (Streamlit)</td><td><span class="tag tag-done">Hoàn thành</span></td><td>5 tabs trực quan</td></tr>
+      <tr><td>7</td><td>Demo Suite</td><td><span class="tag tag-done">Hoàn thành</span></td><td>3 kịch bản demo</td></tr>
+      <tr><td>8</td><td>Collector Tool Package</td><td><span class="tag tag-done">Hoàn thành</span></td><td>.exe + .bat + hướng dẫn</td></tr>
+      <tr><td>9</td><td>Báo cáo (Chương 1–2)</td><td><span class="tag tag-done">Đã nộp</span></td><td>Nộp elearning</td></tr>
+      <tr><td>10</td><td>Báo cáo (Chương 3–4)</td><td><span class="tag tag-draft">Bản nháp</span></td><td>Cần bổ sung dữ liệu thật</td></tr>
+      <tr><td>11</td><td>Thu thập dữ liệu thật</td><td><span class="tag tag-wip">Đang tiến hành</span></td><td>Cần mở rộng 10–20 người</td></tr>
+    </table>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">17</div><div class="stat-label">File source code</div></div>
+      <div class="stat"><div class="stat-val">51.7 KB</div><div class="stat-label">6 module Rust</div></div>
+      <div class="stat"><div class="stat-val">153 KB</div><div class="stat-label">11 script Python</div></div>
+      <div class="stat"><div class="stat-val">21,035</div><div class="stat-label">Mẫu dữ liệu</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 4: TIẾN ĐỘ BÁO CÁO ==================== -->
+<div class="slide" data-index="3">
+  <div class="slide-bar"></div>
+  <div class="slide-top"><div class="slide-num">4</div><div class="slide-title">3. Tiến độ viết báo cáo</div></div>
+  <div class="slide-body">
+    <table>
+      <tr><th>Chương</th><th>Nội dung</th><th>Trạng thái</th><th>Ghi chú</th></tr>
+      <tr class="row-highlight"><td><strong>Chương 1</strong></td><td>Tổng quan</td><td><span class="tag tag-done">Hoàn thành</span></td><td>Đặt vấn đề, tính cấp thiết, mục tiêu, phạm vi, phương pháp</td></tr>
+      <tr class="row-highlight"><td><strong>Chương 2</strong></td><td>Cơ sở lý thuyết</td><td><span class="tag tag-done">Hoàn thành</span></td><td>USB/HID, BadUSB, Keystroke Dynamics, ML, Rust, thiết kế KDS Guard</td></tr>
+      <tr><td><strong>Chương 3</strong></td><td>Kết quả thực nghiệm</td><td><span class="tag tag-draft">Bản nháp</span></td><td>Dataset 21,035 mẫu, kết quả 5 phương pháp, 6 biểu đồ</td></tr>
+      <tr><td><strong>Chương 4</strong></td><td>Kết luận & kiến nghị</td><td><span class="tag tag-draft">Bản nháp</span></td><td>Kết quả đạt được, hạn chế, hướng phát triển</td></tr>
+      <tr><td><strong>Phụ lục</strong></td><td>Hình ảnh + TLTK</td><td><span class="tag tag-done">Hoàn thành</span></td><td>10 hình minh họa + 13 tài liệu tham khảo</td></tr>
+    </table>
+
+    <div class="section">Điểm nhấn</div>
+    <ul>
+      <li>Chương 1 và 2 đã <strong>nộp lên elearning</strong></li>
+      <li>Chương 3 và 4: cần bổ sung dữ liệu thật để cập nhật kết quả thực nghiệm</li>
+      <li>Đang bổ sung thêm tài liệu tham khảo quốc tế</li>
+    </ul>
+
+    <div class="img-grid g2" style="flex:1;min-height:0">
+      <div class="img-box">
+        <img src="baocao/images/hinh_2_2_luong_xu_ly.png" alt="Luồng xử lý">
+        <div class="img-cap">Hình 2.2 — Luồng xử lý dữ liệu</div>
+      </div>
+      <div class="img-box">
+        <img src="baocao/images/hinh_2_3_feature_extraction.png" alt="Feature Extraction">
+        <div class="img-cap">Hình 2.3 — Feature Extraction Pipeline</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 5: TOOL THU THẬP ==================== -->
+<div class="slide" data-index="4">
+  <div class="slide-bar"></div>
+  <div class="slide-top"><div class="slide-num">5</div><div class="slide-title">4. Tool thu thập dữ liệu thực tế</div></div>
+  <div class="slide-body">
+    <div class="section">2 công cụ thu thập</div>
+    <table>
+      <tr><th>Tool</th><th>Ngôn ngữ</th><th>Lệnh</th><th>Ưu điểm</th></tr>
+      <tr><td><code>kds_guard.exe</code></td><td>Rust</td><td><code>--collect-only --log-keys -v</code></td><td>Nhanh, chính xác, timestamp monotonic</td></tr>
+      <tr><td><code>collect_keystrokes.py</code></td><td>Python</td><td>Chạy qua <code>thu_thap.bat</code></td><td>Dễ cài, không cần build</td></tr>
+    </table>
+
+    <div class="section">Hình ảnh thực tế khi thu thập</div>
+    <div class="img-grid g3" style="flex:1;min-height:0">
+      <div class="img-box">
+        <img src="baocao/images/Ảnh chụp màn hình 2026-03-08 115200.png" alt="Batch script 3 sessions">
+        <div class="img-cap">Batch script chạy 3 sessions + Rust collector</div>
+      </div>
+      <div class="img-box">
+        <img src="baocao/images/Ảnh chụp màn hình 2026-03-08 120222.png" alt="700 events">
+        <div class="img-cap">Collector ghi 700 events liên tục vào CSV</div>
+      </div>
+      <div class="img-box">
+        <img src="baocao/images/Ảnh chụp màn hình 2026-03-08 111855.png" alt="Người dùng gõ phím">
+        <div class="img-cap">Người dùng đang gõ — collector ghi realtime</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 6: KIẾN TRÚC - PIPELINE ==================== -->
+<div class="slide" data-index="5">
+  <div class="slide-bar"></div>
+  <div class="slide-top"><div class="slide-num">6</div><div class="slide-title">5. Kiến trúc hệ thống KDS Guard</div></div>
+  <div class="slide-body">
+    <div class="section">Pipeline 5 bước</div>
+    <div class="pipeline">
+      <div class="pipe-step"><div class="pipe-num">Bước 1</div><div class="pipe-name">Bắt phím</div><div class="pipe-desc">input_capture.rs</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><div class="pipe-num">Bước 2</div><div class="pipe-name">Ghi Log</div><div class="pipe-desc">logger.rs → CSV</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><div class="pipe-num">Bước 3</div><div class="pipe-name">Trích xuất</div><div class="pipe-desc">feature.rs → 16 features</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><div class="pipe-num">Bước 4</div><div class="pipe-name">Phát hiện</div><div class="pipe-desc">detector.rs → 7 rules + ML</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-step"><div class="pipe-num">Bước 5</div><div class="pipe-name">Phản ứng</div><div class="pipe-desc">policy.rs → 5 mức</div></div>
+    </div>
+
+    <div class="cols">
+      <div>
+        <div class="section">5 Module Rust</div>
+        <table style="font-size:12px">
+          <tr><th>Module</th><th>KB</th><th>Chức năng</th></tr>
+          <tr><td>Input Capture</td><td>5.7</td><td>Bắt key_down/key_up, timestamp monotonic</td></tr>
+          <tr><td>Logger</td><td>6.0</td><td>Ghi CSV, chế độ ẩn danh</td></tr>
+          <tr><td>Feature</td><td>12.4</td><td>Cửa sổ trượt 40 phím → 16 features</td></tr>
+          <tr><td>Detector</td><td>11.0</td><td>7 rules scoring, 5 mức rủi ro</td></tr>
+          <tr><td>Policy</td><td>6.9</td><td>Allow / LogOnly / Alert / Block / Challenge</td></tr>
+        </table>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;min-height:0">
+        <div class="section">Sơ đồ kiến trúc</div>
+        <div class="img-box" style="flex:1;min-height:0">
+          <img src="baocao/images/hinh_2_1_kien_truc_he_thong.png" alt="Kiến trúc hệ thống">
+          <div class="img-cap">Hình 2.1 — Kiến trúc tổng thể</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 7: KIẾN TRÚC - LUỒNG XỬ LÝ ==================== -->
+<div class="slide" data-index="6">
+  <div class="slide-bar"></div>
+  <div class="slide-top"><div class="slide-num">7</div><div class="slide-title">5. Kiến trúc hệ thống — Luồng xử lý dữ liệu</div></div>
+  <div class="slide-body">
+    <div class="img-grid g2" style="flex:1;min-height:0">
+      <div class="img-box">
+        <img src="baocao/images/hinh_2_2_luong_xu_ly.png" alt="Luồng xử lý">
+        <div class="img-cap">Hình 2.2 — Luồng xử lý dữ liệu từ input đến output</div>
+      </div>
+      <div class="img-box">
+        <img src="baocao/images/hinh_2_3_feature_extraction.png" alt="Feature Extraction">
+        <div class="img-cap">Hình 2.3 — Chi tiết pipeline trích xuất đặc trưng</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 8: FEATURES ==================== -->
+<div class="slide" data-index="7">
+  <div class="slide-bar"></div>
+  <div class="slide-top"><div class="slide-num">8</div><div class="slide-title">6. Đặc trưng Keystroke Dynamics (16 features)</div></div>
+  <div class="slide-body">
+    <div class="cols">
+      <div>
+        <div class="section">2 đại lượng thời gian cốt lõi</div>
+        <p><strong>Hold Time</strong> = t(key_up) − t(key_down)<br>
+        Người: 80–150ms | BadUSB: 5–15ms</p>
+        <p><strong>Flight Time</strong> = t_down(i+1) − t_down(i)<br>
+        Người: 100–250ms | BadUSB: 5–25ms</p>
+
+        <div class="section">16 Features (mỗi cửa sổ 40 phím)</div>
+        <table style="font-size:12px">
+          <tr><th>Nhóm</th><th>Các features</th><th>SL</th></tr>
+          <tr><td>Hold Time</td><td>mean, std, median, IQR</td><td>4</td></tr>
+          <tr><td>Flight Time</td><td>mean, std, median, IQR, p5, p95, min, <strong>CV</strong></td><td>8</td></tr>
+          <tr><td>Hành vi gõ</td><td>typing_speed, modifier_ratio, special_ratio, max_burst</td><td>4</td></tr>
+          <tr class="row-highlight"><td><strong>Tổng</strong></td><td></td><td><strong>16</strong></td></tr>
+        </table>
+
+        <div class="note note-info"><strong>Feature quan trọng nhất: CV</strong> (std / mean)<br>Người: 0.3–0.8 | BadUSB: 0.02–0.10</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;min-height:0">
+        <div class="section">Minh họa trực quan</div>
+        <div class="img-box" style="flex:1;min-height:0">
+          <img src="baocao/images/hinh_3_2_scatter.png" alt="Scatter CV vs Speed">
+          <div class="img-cap">Hình 3.2 — CV vs Typing Speed (vùng nguy hiểm)</div>
+        </div>
+        <div class="img-box" style="flex:1;min-height:0">
+          <img src="baocao/images/hinh_3_4_correlation.png" alt="Correlation Heatmap">
+          <div class="img-cap">Hình 3.4 — Ma trận tương quan 16 features</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 9: DETECTION ENGINE ==================== -->
+<div class="slide" data-index="8">
+  <div class="slide-bar"></div>
+  <div class="slide-top"><div class="slide-num">9</div><div class="slide-title">7. Engine phát hiện</div></div>
+  <div class="slide-body">
+    <div class="cols">
+      <div>
+        <div class="section">7 Luật Rule-based</div>
+        <table style="font-size:12px">
+          <tr><th>#</th><th>Luật</th><th>Ngưỡng</th><th>Điểm</th></tr>
+          <tr><td>1</td><td>Flight time quá nhanh</td><td>&lt; 30ms</td><td>+0.30</td></tr>
+          <tr><td>2</td><td>Nhịp gõ quá đều (CV thấp)</td><td>CV &lt; 0.15</td><td>+0.25</td></tr>
+          <tr><td>3</td><td>Tốc độ vượt giới hạn người</td><td>&gt; 15 keys/s</td><td>+0.20</td></tr>
+          <tr><td>4</td><td>Burst pattern bất thường</td><td>≥ 15 phím &lt; 50ms</td><td>+0.20</td></tr>
+          <tr><td>5</td><td>Hold time quá đều</td><td>IQR &lt; 5ms</td><td>+0.15</td></tr>
+          <tr><td>6</td><td>Nhiều phím modifier</td><td>&gt; 40%</td><td>+0.10</td></tr>
+          <tr><td>7</td><td>Flight time cực nhỏ</td><td>&lt; 5ms</td><td>+0.10</td></tr>
+        </table>
+
+        <div class="section">Hybrid Score</div>
+        <div class="note note-info" style="text-align:center;font-size:14px;font-weight:600">
+          Hybrid = 0.6 × Rule_Score + 0.4 × ML_Score
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;min-height:0">
+        <div class="section">5 Mức rủi ro → Hành động</div>
+        <div class="levels">
+          <div class="level" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0">NORMAL<br><span style="font-weight:400;font-size:10px">0–0.1</span></div>
+          <div class="level" style="background:#e8effc;color:#1a56db;border:1px solid #93c5fd">LOW<br><span style="font-weight:400;font-size:10px">0.1–0.3</span></div>
+          <div class="level" style="background:#fefce8;color:#d97706;border:1px solid #fcd34d">MEDIUM<br><span style="font-weight:400;font-size:10px">0.3–0.6</span></div>
+          <div class="level" style="background:#fff7ed;color:#ea580c;border:1px solid #fdba74">HIGH<br><span style="font-weight:400;font-size:10px">0.6–0.8</span></div>
+          <div class="level" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5">CRITICAL<br><span style="font-weight:400;font-size:10px">0.8–1.0</span></div>
+        </div>
+
+        <div class="section">Sơ đồ Detection Engine</div>
+        <div class="img-box" style="flex:1;min-height:0">
+          <img src="baocao/images/hinh_2_4_detection_engine.png" alt="Detection Engine">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 10: KẾT QUẢ ==================== -->
+<div class="slide" data-index="9">
+  <div class="slide-bar"></div>
+  <div class="slide-top"><div class="slide-num">10</div><div class="slide-title">8. Kết quả đánh giá và so sánh</div></div>
+  <div class="slide-body">
+    <div class="section">Kết quả 5 phương pháp trên 21,035 mẫu</div>
+    <table>
+      <tr><th>Phương pháp</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>AUC-ROC</th></tr>
+      <tr class="row-highlight"><td><strong>Rule-based</strong></td><td><strong>100%</strong></td><td><strong>100%</strong></td><td><strong>100%</strong></td><td><strong>1.000</strong></td><td><strong>1.000</strong></td></tr>
+      <tr><td>Isolation Forest</td><td>91.0%</td><td>10.9%</td><td>100%</td><td>0.197</td><td>0.995</td></tr>
+      <tr><td>One-Class SVM</td><td>90.0%</td><td>10.0%</td><td>100%</td><td>0.181</td><td>0.997</td></tr>
+      <tr class="row-highlight"><td><strong>Random Forest</strong></td><td><strong>100%</strong></td><td><strong>100%</strong></td><td><strong>100%</strong></td><td><strong>1.000</strong></td><td><strong>1.000</strong></td></tr>
+      <tr class="row-highlight"><td><strong>Hybrid (0.6R+0.4ML)</strong></td><td><strong>100%</strong></td><td><strong>100%</strong></td><td><strong>100%</strong></td><td><strong>1.000</strong></td><td><strong>1.000</strong></td></tr>
+    </table>
+
+    <div class="section">Latency (đáp ứng real-time)</div>
+    <div class="cols" style="flex:0 0 auto">
+      <div>
+        <table>
+          <tr><th>Phương pháp</th><th>Thời gian/mẫu</th></tr>
+          <tr><td>Random Forest</td><td><strong>0.012 ms</strong></td></tr>
+          <tr><td>Isolation Forest</td><td>0.013 ms</td></tr>
+          <tr><td>One-Class SVM</td><td>0.476 ms</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="note note-warn"><strong>Lưu ý:</strong> Dữ liệu injection hiện tại là <strong>mô phỏng bằng phần mềm</strong>, chưa phải thiết bị BadUSB vật lý.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 11: BIỂU ĐỒ SO SÁNH ==================== -->
+<div class="slide" data-index="10">
+  <div class="slide-bar"></div>
+  <div class="slide-top"><div class="slide-num">11</div><div class="slide-title">8. Kết quả — Biểu đồ so sánh</div></div>
+  <div class="slide-body">
+    <div class="img-grid g2" style="flex:1;min-height:0">
+      <div class="img-box">
+        <img src="baocao/images/hinh_3_6_model.png" alt="Model Comparison">
+        <div class="img-cap">Hình 3.6 — So sánh F1-Score và AUC giữa các mô hình</div>
+      </div>
+      <div class="img-box">
+        <img src="baocao/images/hinh_3_3_boxplot.png" alt="Boxplot Comparison">
+        <div class="img-cap">Hình 3.3 — Boxplot so sánh features Human vs Injection</div>
+      </div>
+    </div>
+    <div class="img-grid g2" style="flex:1;min-height:0">
+      <div class="img-box">
+        <img src="baocao/images/hinh_3_1_distribution.png" alt="Distribution">
+        <div class="img-cap">Hình 3.1 — Phân bố Human vs Injection</div>
+      </div>
+      <div class="img-box">
+        <img src="baocao/images/hinh_3_5_timeline.png" alt="Timeline">
+        <div class="img-cap">Hình 3.5 — Hành vi gõ phím theo thời gian</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 12: DEMO ==================== -->
+<div class="slide" data-index="11">
+  <div class="slide-bar"></div>
+  <div class="slide-top"><div class="slide-num">12</div><div class="slide-title">9. Demo hệ thống</div></div>
+  <div class="slide-body">
+    <div class="cols">
+      <div>
+        <div class="section">Kịch bản 1: Người gõ bình thường → NORMAL</div>
+        <div class="term">
+          <span class="t-blue">KDS Guard v0.1.0</span><br>
+          Mode: Detection Active<br><br>
+          <span class="t-green">Features: speed=7.2 k/s, CV=0.452, burst=0</span><br>
+          <span class="t-green">→ Risk: NORMAL — Không có cảnh báo</span>
+        </div>
+
+        <div class="section">Kịch bản 2: Injection → CRITICAL</div>
+        <div class="term">
+          <span class="t-red">CẢNH BÁO — Risk Score: 0.95</span><br><br>
+          <span class="t-yellow">• Flight time trung bình: 8.5ms</span><br>
+          <span class="t-yellow">• CV rất thấp: 0.035</span><br>
+          <span class="t-yellow">• Tốc độ: 47.2 keys/s</span><br>
+          <span class="t-yellow">• Burst: 42 phím liên tiếp &lt; 50ms</span><br><br>
+          <span class="t-red">→ PHÁT HIỆN TẤN CÔNG HID INJECTION!</span>
+        </div>
+      </div>
+      <div>
+        <div class="section">Kịch bản 3: Dashboard Streamlit</div>
+        <p>5 tabs: <strong>Overview</strong> | <strong>Live Monitor</strong> | <strong>Analysis</strong> | <strong>Model Performance</strong> | <strong>Detection Log</strong></p>
+        <div class="term" style="text-align:center">
+          <span class="t-blue">streamlit run dashboard/dashboard.py</span><br>
+          → http://localhost:8501
+        </div>
+
+        <div class="note note-ok" style="margin-top:auto">
+          <strong>Cả 3 kịch bản đều chạy được trực tiếp trên máy.</strong><br>
+          Nhóm sẵn sàng demo khi thầy yêu cầu.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 13: KHÓ KHĂN ==================== -->
+<div class="slide" data-index="12">
+  <div class="slide-bar"></div>
+  <div class="slide-top"><div class="slide-num">13</div><div class="slide-title">10. Khó khăn hiện tại</div></div>
+  <div class="slide-body">
+    <table>
+      <tr><th>#</th><th>Vấn đề</th><th>Mức độ</th><th>Cách giải quyết dự kiến</th></tr>
+      <tr><td>1</td><td><strong>Thiếu dữ liệu người dùng thật</strong></td><td><span class="tag tag-high">Cao</span></td><td>Phát bộ kit cho 10–20 bạn, mỗi người 3 sessions</td></tr>
+      <tr><td>2</td><td><strong>Chưa test BadUSB vật lý</strong></td><td><span class="tag tag-wip">Trung bình</span></td><td>Mua/mượn USB Rubber Ducky hoặc DigiSpark</td></tr>
+      <tr><td>3</td><td><strong>Dataset chênh lệch</strong></td><td><span class="tag tag-wip">Trung bình</span></td><td>Human 98.9% vs Injection 1.1% — cần thận trọng</td></tr>
+      <tr><td>4</td><td><strong>Macro/AutoType bị báo nhầm</strong></td><td><span class="tag tag-draft">Thấp</span></td><td>Whitelist ứng dụng tin cậy (password manager)</td></tr>
+      <tr><td>5</td><td><strong>Chương 3–4 cần bổ sung</strong></td><td><span class="tag tag-wip">Trung bình</span></td><td>Đợi dữ liệu thật → retrain → cập nhật</td></tr>
+    </table>
+
+    <div class="note note-err"><strong>Rủi ro lớn nhất:</strong> Nếu không thu thập đủ dữ liệu người thật, kết quả chỉ dựa trên CMU Benchmark + mô phỏng — độ tin cậy hạn chế.</div>
+
+    <div class="img-grid g3" style="flex:1;min-height:0">
+      <div class="img-box">
+        <img src="baocao/images/Ảnh chụp màn hình 2026-03-08 111202.png" alt="Rust collector khởi động">
+        <div class="img-cap">Rust Collector khởi động</div>
+      </div>
+      <div class="img-box">
+        <img src="baocao/images/Ảnh chụp màn hình 2026-03-08 120505.png" alt="Build release">
+        <div class="img-cap">Build Rust thành công (47.50s)</div>
+      </div>
+      <div class="img-box">
+        <img src="baocao/images/Ảnh chụp màn hình 2026-03-08 120646.png" alt="Python thu thập">
+        <div class="img-cap">Python batch thu thập 3 sessions</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 14: KẾ HOẠCH ==================== -->
+<div class="slide" data-index="13">
+  <div class="slide-bar"></div>
+  <div class="slide-top"><div class="slide-num">14</div><div class="slide-title">11. Kế hoạch tiếp theo</div></div>
+  <div class="slide-body">
+    <table>
+      <tr><th>Tuần</th><th>Hạng mục</th><th>Mục tiêu cụ thể</th></tr>
+      <tr class="row-highlight"><td><strong>Tuần 6</strong></td><td>Thu thập dữ liệu</td><td>Phát bộ kit cho 10–20 người, mỗi người gõ 3 sessions (~2 phút/người)</td></tr>
+      <tr class="row-highlight"><td><strong>Tuần 6</strong></td><td>Tích hợp & retrain</td><td>integrate_all.bat → train_model.py → đánh giá lại toàn bộ</td></tr>
+      <tr><td><strong>Tuần 7</strong></td><td>Hoàn thiện Chương 3</td><td>Cập nhật kết quả thực nghiệm với dữ liệu thật, bổ sung biểu đồ</td></tr>
+      <tr><td><strong>Tuần 7</strong></td><td>Hoàn thiện Chương 4</td><td>Kết luận, hạn chế, hướng phát triển tương lai</td></tr>
+      <tr><td><strong>Tuần 8</strong></td><td>Demo hoàn chỉnh</td><td>3 kịch bản + quay video demo cho giảng viên</td></tr>
+      <tr><td><strong>Tuần 8</strong></td><td>Nộp báo cáo cuối</td><td>Format chuẩn, kiểm tra lại toàn bộ nội dung</td></tr>
+    </table>
+
+    <div class="section">Bộ kit thu thập đã sẵn sàng</div>
+    <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat"><div class="stat-val">862 KB</div><div class="stat-label">KDS_Guard_ThuThap.zip</div></div>
+      <div class="stat"><div class="stat-val">3 file</div><div class="stat-label">kds_guard.exe + thu_thap.bat + HUONGDAN.md</div></div>
+      <div class="stat"><div class="stat-val">~2 phút</div><div class="stat-label">Giải nén → Chạy → Xong / người</div></div>
+    </div>
+
+    <div class="note note-ok" style="margin-top:auto">
+      <strong>Mục tiêu cuối cùng:</strong><br>
+      — Hệ thống phát hiện BadUSB real-time với F1-Score &gt; 95% trên dữ liệu thật<br>
+      — Báo cáo 4 chương hoàn chỉnh + demo 3 kịch bản<br>
+      — Khi thầy cần, nhóm có thể demo trực tiếp trên máy
+    </div>
+  </div>
+</div>
+
+</div><!-- end slide-container -->
+
+<!-- NAVIGATION -->
+<div class="nav">
+  <button onclick="prevSlide()" title="Slide trước (←)">◀</button>
+  <div class="counter"><span id="cur">1</span> / <span id="tot">14</span></div>
+  <button onclick="nextSlide()" title="Slide sau (→)">▶</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+let current = 0;
+const total = slides.length;
+document.getElementById('tot').textContent = total;
+
+function showSlide(n) {
+  slides[current].classList.remove('active');
+  current = (n + total) % total;
+  slides[current].classList.add('active');
+  document.getElementById('cur').textContent = current + 1;
+  document.getElementById('progressBar').style.width = ((current + 1) / total * 100) + '%';
+}
+
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); nextSlide(); }
+  if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prevSlide(); }
+  if (e.key === 'Home') { e.preventDefault(); showSlide(0); }
+  if (e.key === 'End') { e.preventDefault(); showSlide(total - 1); }
+});
+
+let tx = 0;
+document.addEventListener('touchstart', (e) => { tx = e.changedTouches[0].screenX; });
+document.addEventListener('touchend', (e) => {
+  const d = e.changedTouches[0].screenX - tx;
+  if (Math.abs(d) > 50) { d > 0 ? prevSlide() : nextSlide(); }
+});
+
+showSlide(0);
+</script>
+</body>
+</html>

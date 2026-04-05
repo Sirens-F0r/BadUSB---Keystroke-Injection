@@ -1,69 +1,45 @@
-//! Module trích xuất đặc trưng từ chuỗi sự kiện bàn phím
-//!
-//! Tính toán các đặc trưng Keystroke Dynamics theo cửa sổ trượt:
-//! - Hold Time (Dwell time)
-//! - Flight Time (Inter-key time)
-//! - Các thống kê: mean, std, CV, IQR, speed
-//! - Đặc trưng phát hiện injection: burst, regularity
+// Trich xuat dac trung keystroke dynamics theo cua so truot
 
 use std::collections::VecDeque;
 
 use crate::input_capture::KeyEvent;
 
-/// Vector đặc trưng cho một cửa sổ phím
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct FeatureVector {
-    /// Thời điểm bắt đầu cửa sổ (ms)
     pub window_start_ms: f64,
-    /// Thời điểm kết thúc cửa sổ (ms)
     pub window_end_ms: f64,
-    /// Số phím trong cửa sổ
     pub num_keys: usize,
 
-    // === Hold Time features ===
-    /// Trung bình Hold Time (ms)
+    // Hold Time
     pub mean_hold_time: f64,
-    /// Độ lệch chuẩn Hold Time
     pub std_hold_time: f64,
-    /// Median Hold Time
     pub median_hold_time: f64,
-    /// IQR Hold Time
     pub iqr_hold_time: f64,
 
-    // === Flight Time features ===
-    /// Trung bình Flight Time DD (ms)
+    // Flight Time
     pub mean_flight_time: f64,
-    /// Độ lệch chuẩn Flight Time DD
     pub std_flight_time: f64,
-    /// Median Flight Time DD
     pub median_flight_time: f64,
-    /// IQR Flight Time DD
     pub iqr_flight_time: f64,
 
-    // === Đặc trưng phát hiện injection ===
-    /// Coefficient of Variation của Flight Time (CV = std/mean)
-    /// BadUSB thường có CV rất thấp (gõ đều như metronome)
+    // Cac chi so phat hien injection
     pub cv_flight_time: f64,
-    /// Tốc độ gõ (phím/giây)
     pub typing_speed: f64,
-    /// Tỉ lệ phím modifier trong cửa sổ
     pub modifier_ratio: f64,
-    /// Tỉ lệ phím special trong cửa sổ
     pub special_ratio: f64,
-    /// Có burst pattern không (nhiều phím trong thời gian rất ngắn)
     pub has_burst: bool,
-    /// Số phím trong burst dài nhất
     pub max_burst_length: usize,
-    /// Flight Time nhỏ nhất (ms) - injection thường cực thấp
     pub min_flight_time: f64,
-    /// Percentile 5 của Flight Time
     pub p5_flight_time: f64,
-    /// Percentile 95 của Flight Time
     pub p95_flight_time: f64,
+
+    // Injection Fingerprint (dau van tay injection)
+    pub inter_command_pause_count: usize,  // so lan co khoang nghi > 80ms giua cac cum phim nhanh
+    pub pause_regularity: f64,             // CV cua cac khoang nghi — may nghi deu, nguoi nghi khong deu
+    pub enter_after_burst: f64,            // ty le Enter xuat hien ngay sau burst
 }
 
-/// Cặp key_down/key_up cho một phím
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 struct KeyPair {
     key_code: String,
     key_class: String,
@@ -72,29 +48,17 @@ struct KeyPair {
     up_time: Option<f64>,
 }
 
-/// Feature Extractor - trích xuất đặc trưng từ cửa sổ phím
 pub struct FeatureExtractor {
-    /// Kích thước cửa sổ (số phím)
     window_size: usize,
-    /// Bước trượt (slide step)
     slide_step: usize,
-    /// Buffer các cặp phím đã hoàn thành (có cả down + up)
     completed_pairs: VecDeque<KeyPair>,
-    /// Các phím đang chờ key_up
     pending_downs: Vec<KeyPair>,
-    /// Đếm số phím đã xử lý kể từ lần extract cuối
     keys_since_last_extract: usize,
-    /// Ngưỡng burst: flight time < threshold (ms) liên tiếp
     burst_threshold_ms: f64,
-    /// Số phím tối thiểu tạo thành burst
     burst_min_keys: usize,
 }
 
 impl FeatureExtractor {
-    /// Tạo FeatureExtractor mới
-    ///
-    /// - `window_size`: số phím mỗi cửa sổ (khuyến nghị 30-60)
-    /// - `slide_step`: bước trượt (khuyến nghị window_size / 2)
     pub fn new(window_size: usize, slide_step: usize) -> Self {
         Self {
             window_size,
@@ -102,12 +66,11 @@ impl FeatureExtractor {
             completed_pairs: VecDeque::new(),
             pending_downs: Vec::new(),
             keys_since_last_extract: 0,
-            burst_threshold_ms: 50.0,  // Phím cách nhau < 50ms = burst
-            burst_min_keys: 10,         // Ít nhất 10 phím liên tiếp
+            burst_threshold_ms: 50.0,
+            burst_min_keys: 10,
         }
     }
 
-    /// Xử lý một event mới, trả về FeatureVector nếu đủ cửa sổ
     pub fn process_event(&mut self, event: &KeyEvent) -> Option<FeatureVector> {
         match event.event_type.as_str() {
             "down" => {
@@ -120,7 +83,7 @@ impl FeatureExtractor {
                 });
             }
             "up" => {
-                // Tìm key_down tương ứng (cùng key_code, chưa có up_time)
+                // Tim key_down tuong ung
                 if let Some(pos) = self
                     .pending_downs
                     .iter()
@@ -135,7 +98,7 @@ impl FeatureExtractor {
             _ => {}
         }
 
-        // Kiểm tra xem đã đủ cửa sổ chưa
+        // Kiem tra da du cua so chua
         if self.completed_pairs.len() >= self.window_size
             && self.keys_since_last_extract >= self.slide_step
         {
@@ -146,9 +109,8 @@ impl FeatureExtractor {
         }
     }
 
-    /// Trích xuất đặc trưng từ cửa sổ hiện tại
     fn extract_features(&mut self) -> FeatureVector {
-        // Lấy window_size phím gần nhất
+        // Lay window_size phim gan nhat
         let pairs: Vec<KeyPair> = self
             .completed_pairs
             .iter()
@@ -160,28 +122,28 @@ impl FeatureExtractor {
             .rev()
             .collect();
 
-        // === Hold Times ===
+        // Hold Times
         let hold_times: Vec<f64> = pairs
             .iter()
             .filter_map(|p| p.up_time.map(|up| up - p.down_time))
-            .filter(|ht| *ht > 0.0 && *ht < 2000.0) // Lọc outlier
+            .filter(|ht| *ht > 0.0 && *ht < 2000.0)
             .collect();
 
-        // === Flight Times (Down-Down) ===
+        // Flight Times (Down-Down)
         let flight_times: Vec<f64> = pairs
             .windows(2)
             .map(|w| w[1].down_time - w[0].down_time)
-            .filter(|ft| *ft > 0.0 && *ft < 5000.0) // Lọc outlier
+            .filter(|ft| *ft > 0.0 && *ft < 5000.0)
             .collect();
 
-        // === Statistics ===
+
         let (mean_ht, std_ht, median_ht, iqr_ht) = compute_stats(&hold_times);
         let (mean_ft, std_ft, median_ft, iqr_ft) = compute_stats(&flight_times);
 
-        // === CV (Coefficient of Variation) ===
+        // CV
         let cv_ft = if mean_ft > 0.0 { std_ft / mean_ft } else { 0.0 };
 
-        // === Typing speed (keys/second) ===
+        // Typing speed
         let window_duration_s = if let (Some(first), Some(last)) = (pairs.first(), pairs.last()) {
             (last.down_time - first.down_time) / 1000.0
         } else {
@@ -193,26 +155,28 @@ impl FeatureExtractor {
             0.0
         };
 
-        // === Modifier & Special ratio ===
+        // Modifier & Special ratio
         let modifier_count = pairs.iter().filter(|p| p.is_modifier).count();
         let special_count = pairs.iter().filter(|p| p.key_class == "special").count();
         let total = pairs.len().max(1) as f64;
         let modifier_ratio = modifier_count as f64 / total;
         let special_ratio = special_count as f64 / total;
 
-        // === Burst detection ===
+        // Burst detection
         let (has_burst, max_burst_length) = self.detect_burst(&flight_times);
 
-        // === Percentiles ===
+        // Percentiles
         let min_ft = flight_times.iter().copied().fold(f64::INFINITY, f64::min);
         let p5_ft = percentile(&flight_times, 5.0);
         let p95_ft = percentile(&flight_times, 95.0);
 
-        // === Window timing ===
+        // Injection Fingerprint
+        let injection_fp = self.detect_injection_fingerprint(&pairs, &flight_times);
+
+
         let window_start = pairs.first().map(|p| p.down_time).unwrap_or(0.0);
         let window_end = pairs.last().map(|p| p.down_time).unwrap_or(0.0);
 
-        // Dọn buffer cũ (giữ lại đủ cho sliding window)
         while self.completed_pairs.len() > self.window_size * 2 {
             self.completed_pairs.pop_front();
         }
@@ -238,10 +202,78 @@ impl FeatureExtractor {
             min_flight_time: if min_ft.is_finite() { min_ft } else { 0.0 },
             p5_flight_time: p5_ft,
             p95_flight_time: p95_ft,
+            inter_command_pause_count: injection_fp.0,
+            pause_regularity: injection_fp.1,
+            enter_after_burst: injection_fp.2,
         }
     }
 
-    /// Phát hiện burst pattern trong flight times
+    /// Phat hien dau van tay injection:
+    /// 1. inter_command_pause_count: so lan co khoang nghi > 80ms giua cac cum go nhanh
+    /// 2. pause_regularity: CV cua cac khoang nghi (may nghi deu → CV thap)
+    /// 3. enter_after_burst: ty le Enter xuat hien ngay sau chuoi go nhanh
+    fn detect_injection_fingerprint(
+        &self,
+        pairs: &[KeyPair],
+        flight_times: &[f64],
+    ) -> (usize, f64, f64) {
+        // Tim cac khoang nghi giua cac cum phim nhanh
+        let pause_threshold = 80.0; // ms
+        let fast_threshold = self.burst_threshold_ms; // 50ms
+        let mut pauses: Vec<f64> = Vec::new();
+        let mut was_fast = false;
+
+        for ft in flight_times {
+            if *ft < fast_threshold {
+                was_fast = true;
+            } else if was_fast && *ft >= pause_threshold {
+                pauses.push(*ft);
+                was_fast = false;
+            } else {
+                was_fast = false;
+            }
+        }
+
+        let pause_count = pauses.len();
+
+        // CV cua cac khoang nghi
+        let pause_regularity = if pauses.len() >= 2 {
+            let mean = pauses.iter().sum::<f64>() / pauses.len() as f64;
+            let variance = pauses.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / pauses.len() as f64;
+            if mean > 0.0 { variance.sqrt() / mean } else { 0.0 }
+        } else {
+            1.0 // khong du du lieu → gia dinh la nguoi (CV cao)
+        };
+
+        // Ty le Enter xuat hien ngay sau burst
+        let mut enter_after_count = 0;
+        let mut burst_end_count = 0;
+
+        for i in 1..pairs.len() {
+            let ft = pairs[i].down_time - pairs[i - 1].down_time;
+            if ft >= pause_threshold && i >= 2 {
+                // Kiem tra phim truoc khoang nghi co phai ket thuc burst khong
+                let prev_ft = pairs[i - 1].down_time - pairs[i - 2].down_time;
+                if prev_ft < fast_threshold {
+                    burst_end_count += 1;
+                    // Phim ngay truoc khoang nghi la gi?
+                    let key = &pairs[i - 1].key_code;
+                    if key == "Return" || key == "Enter" {
+                        enter_after_count += 1;
+                    }
+                }
+            }
+        }
+
+        let enter_ratio = if burst_end_count > 0 {
+            enter_after_count as f64 / burst_end_count as f64
+        } else {
+            0.0
+        };
+
+        (pause_count, pause_regularity, enter_ratio)
+    }
+
     fn detect_burst(&self, flight_times: &[f64]) -> (bool, usize) {
         let mut max_burst = 0;
         let mut current_burst = 0;
@@ -259,9 +291,8 @@ impl FeatureExtractor {
     }
 }
 
-// === Hàm thống kê tiện ích ===
+// Ham thong ke
 
-/// Tính mean, std, median, IQR của một mảng f64
 fn compute_stats(data: &[f64]) -> (f64, f64, f64, f64) {
     if data.is_empty() {
         return (0.0, 0.0, 0.0, 0.0);
@@ -287,7 +318,6 @@ fn compute_stats(data: &[f64]) -> (f64, f64, f64, f64) {
     (mean, std, median, iqr)
 }
 
-/// Tính percentile của mảng f64
 fn percentile(data: &[f64], p: f64) -> f64 {
     if data.is_empty() {
         return 0.0;

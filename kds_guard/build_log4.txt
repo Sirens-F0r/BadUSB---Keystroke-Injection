@@ -1,2 +1,0 @@
-   Compiling nalgebra v0.32.6
-   Compiling statrs v0.17.1

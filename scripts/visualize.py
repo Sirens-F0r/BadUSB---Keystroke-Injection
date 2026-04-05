@@ -1,15 +1,4 @@
-"""
-Visualization & Analysis Script cho KDS Guard
-Tạo các biểu đồ phân tích keystroke dynamics.
-
-Charts:
-  1. Distribution: Hold Time & Flight Time (human vs injection)
-  2. Scatter: CV vs Typing Speed
-  3. ROC Curve & PR Curve
-  4. Feature Importance
-  5. Time series: Risk Score
-  6. Boxplot: so sánh features
-"""
+# Tao bieu do phan tich keystroke dynamics
 
 import os
 import sys
@@ -281,9 +270,9 @@ def generate_all_plots(data_dir: str = 'data', output_dir: str = 'plots', model_
     os.makedirs(output_dir, exist_ok=True)
     setup_vietnamese_font()
 
-    print("╔══════════════════════════════════════════════╗")
-    print("║  📊 KDS Guard - Visualization & Analysis      ║")
-    print("╚══════════════════════════════════════════════╝")
+    print("=" * 46)
+    print("  KDS Guard - Visualization")
+    print("=" * 46)
     print()
 
     # Tìm features dataset
@@ -323,7 +312,7 @@ def generate_all_plots(data_dir: str = 'data', output_dir: str = 'plots', model_
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="📊 KDS Guard - Visualization")
+    parser = argparse.ArgumentParser(description="Visualization")
     parser.add_argument('-d', '--data-dir', default='data')
     parser.add_argument('-o', '--output-dir', default='plots')
     parser.add_argument('-m', '--model-dir', default='models')

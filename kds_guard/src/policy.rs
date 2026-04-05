@@ -1,45 +1,28 @@
-//! Module chính sách phản ứng (Response Engine)
-//!
-//! Quyết định hành động dựa trên risk score:
-//! - Level 1: Cảnh báo (notification)
-//! - Level 2: Drop input tạm thời (soft block)
-//! - Level 3: Yêu cầu xác minh (challenge)
+// Chinh sach phan ung khi phat hien bat thuong
 
 use crate::detector::{DetectionResult, RiskLevel};
 
-/// Hành động phản ứng
 #[derive(Debug, Clone)]
 pub enum PolicyAction {
-    /// Cho phép, không làm gì
     Allow,
-    /// Ghi log để giám sát
     LogOnly(String),
-    /// Hiển thị cảnh báo cho người dùng
     Alert(String),
-    /// Chặn tạm thời input (soft block)
     SoftBlock {
         message: String,
         duration_ms: u64,
     },
-    /// Yêu cầu xác minh (challenge)
     Challenge {
         message: String,
         expected_input: String,
     },
 }
 
-/// Cấu hình chính sách
 #[derive(Debug, Clone)]
 pub struct PolicyConfig {
-    /// Bật/tắt cảnh báo
     pub enable_alerts: bool,
-    /// Bật/tắt soft block
     pub enable_soft_block: bool,
-    /// Bật/tắt challenge
     pub enable_challenge: bool,
-    /// Thời gian soft block (ms)
     pub soft_block_duration_ms: u64,
-    /// Cooldown giữa các cảnh báo (ms) - tránh spam
     pub alert_cooldown_ms: u64,
 }
 
@@ -47,22 +30,20 @@ impl Default for PolicyConfig {
     fn default() -> Self {
         Self {
             enable_alerts: true,
-            enable_soft_block: false,  // Tắt mặc định, bật khi cần
-            enable_challenge: false,    // Tắt mặc định
+            enable_soft_block: false,
+            enable_challenge: false,
             soft_block_duration_ms: 2000,
             alert_cooldown_ms: 5000,
         }
     }
 }
 
-/// Policy Engine - quyết định hành động phản ứng
 pub struct PolicyEngine {
     config: PolicyConfig,
     last_alert_time_ms: f64,
 }
 
 impl PolicyEngine {
-    /// Tạo PolicyEngine mới
     pub fn new(config: PolicyConfig) -> Self {
         Self {
             config,
@@ -70,7 +51,6 @@ impl PolicyEngine {
         }
     }
 
-    /// Quyết định hành động dựa trên kết quả phát hiện
     pub fn decide(&mut self, result: &DetectionResult) -> PolicyAction {
         match result.risk_level {
             RiskLevel::Normal => PolicyAction::Allow,
@@ -142,13 +122,11 @@ impl PolicyEngine {
         }
     }
 
-    /// Kiểm tra cooldown cảnh báo
     fn should_alert(&self, current_time_ms: f64) -> bool {
         (current_time_ms - self.last_alert_time_ms) >= self.config.alert_cooldown_ms as f64
     }
 }
 
-/// Tạo chuỗi challenge ngẫu nhiên (human-in-the-loop verification)
 fn generate_challenge() -> String {
     use std::time::SystemTime;
     let seed = SystemTime::now()
@@ -156,7 +134,7 @@ fn generate_challenge() -> String {
         .unwrap_or_default()
         .as_millis();
 
-    // Tạo chuỗi 3 ký tự ngẫu nhiên đơn giản
+    // Tao chuoi 3 ky tu ngau nhien
     let chars = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     let c1 = chars[(seed % chars.len() as u128) as usize] as char;
     let c2 = chars[((seed / 31) % chars.len() as u128) as usize] as char;

@@ -1,13 +1,4 @@
-"""
-Demo Data Generator cho KDS Guard
-Tạo bộ dữ liệu demo hoàn chỉnh (human + injection) để test toàn bộ pipeline.
-
-Tạo:
-  - 10 "người dùng" ảo với các kiểu gõ khác nhau
-  - 3 loại injection pattern
-  - Feature extraction tự động
-  - Dataset sẵn sàng cho training
-"""
+# Tao bo du lieu demo (human + injection) de test pipeline
 
 import os
 import argparse
@@ -400,9 +391,9 @@ def generate_full_demo_dataset(output_dir: str = "data", n_users: int = 20):
     """Tạo bộ dữ liệu demo hoàn chỉnh."""
     os.makedirs(output_dir, exist_ok=True)
 
-    print("╔════════════════════════════════════════════════════╗")
-    print("║  🎮 KDS Guard - Demo Dataset Generator             ║")
-    print("╚════════════════════════════════════════════════════╝")
+    print("=" * 52)
+    print("  KDS Guard - Demo Dataset Generator")
+    print("=" * 52)
     print()
 
     np.random.seed(42)  # Reproducible
@@ -543,7 +534,7 @@ def generate_full_demo_dataset(output_dir: str = "data", n_users: int = 20):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="🎮 Generate demo dataset")
+    parser = argparse.ArgumentParser(description="Generate demo dataset")
     parser.add_argument('-d', '--data-dir', default='data',
                         help='Output directory')
     parser.add_argument('-n', '--n-users', type=int, default=20,

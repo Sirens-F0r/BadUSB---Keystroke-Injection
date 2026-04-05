@@ -1,7 +1,4 @@
-//! Module ghi log sự kiện bàn phím ra file CSV
-//!
-//! Ghi dữ liệu keystroke đã ẩn danh (không lưu nội dung gõ thực tế,
-//! chỉ lưu timing + key_class) tuân thủ quy định về quyền riêng tư.
+// Ghi su kien ban phim ra file CSV
 
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
@@ -13,20 +10,13 @@ use csv::Writer;
 
 use crate::input_capture::KeyEvent;
 
-/// Cấu hình cho logger
 #[derive(Debug, Clone)]
 pub struct LoggerConfig {
-    /// Thư mục lưu file log
     pub output_dir: PathBuf,
-    /// Tiền tố tên file
     pub file_prefix: String,
-    /// Có lưu key_code không (false = chỉ lưu key_class để bảo mật)
-    pub log_key_code: bool,
-    /// Số event tối đa mỗi file (0 = không giới hạn)
+    pub log_key_code: bool,  // false = chi luu key_class
     pub max_events_per_file: usize,
-    /// Session ID
     pub session_id: String,
-    /// User ID (đã hash/ẩn danh)
     pub user_id: String,
 }
 
@@ -36,7 +26,7 @@ impl Default for LoggerConfig {
         Self {
             output_dir: PathBuf::from("data"),
             file_prefix: "keystroke_log".to_string(),
-            log_key_code: true, // Trong giai đoạn phát triển, log key_code để debug
+            log_key_code: true,
             max_events_per_file: 0,
             session_id: timestamp,
             user_id: "anonymous".to_string(),
@@ -44,7 +34,6 @@ impl Default for LoggerConfig {
     }
 }
 
-/// Bản ghi CSV cho mỗi sự kiện
 #[derive(Debug, serde::Serialize)]
 struct CsvRecord {
     timestamp_ms: f64,
@@ -56,16 +45,14 @@ struct CsvRecord {
     user_id: String,
 }
 
-/// Keystroke Logger - ghi sự kiện bàn phím ra CSV
 pub struct KeystrokeLogger {
     config: LoggerConfig,
     event_count: usize,
 }
 
 impl KeystrokeLogger {
-    /// Tạo logger mới với config
     pub fn new(config: LoggerConfig) -> Self {
-        // Tạo thư mục output nếu chưa tồn tại
+
         if let Err(e) = fs::create_dir_all(&config.output_dir) {
             log::error!("Không thể tạo thư mục {}: {}", config.output_dir.display(), e);
         }
@@ -76,7 +63,6 @@ impl KeystrokeLogger {
         }
     }
 
-    /// Lấy đường dẫn file log hiện tại
     fn get_log_path(&self) -> PathBuf {
         let filename = format!(
             "{}_{}.csv",
@@ -86,7 +72,6 @@ impl KeystrokeLogger {
         self.config.output_dir.join(filename)
     }
 
-    /// Ghi header CSV nếu file chưa tồn tại
     fn ensure_header(&self, path: &Path) -> std::io::Result<()> {
         if !path.exists() {
             let mut file = File::create(path)?;
@@ -99,7 +84,6 @@ impl KeystrokeLogger {
         Ok(())
     }
 
-    /// Ghi một event vào file CSV
     pub fn log_event(&mut self, event: &KeyEvent) -> std::io::Result<()> {
         let path = self.get_log_path();
         self.ensure_header(&path)?;
@@ -116,7 +100,6 @@ impl KeystrokeLogger {
         let key_code = if self.config.log_key_code {
             event.key_code.clone()
         } else {
-            // Ẩn danh: chỉ ghi key_class thay vì key_code thật
             event.key_class.clone()
         };
 
@@ -135,7 +118,7 @@ impl KeystrokeLogger {
 
         self.event_count += 1;
 
-        // Log tiến trình mỗi 100 events
+
         if self.event_count % 100 == 0 {
             log::info!("📊 Đã ghi {} events vào {}", self.event_count, path.display());
         }
@@ -143,7 +126,6 @@ impl KeystrokeLogger {
         Ok(())
     }
 
-    /// Vòng lặp chính: nhận events từ channel và ghi log
     pub fn run(&mut self, rx: Receiver<KeyEvent>) {
         log::info!(
             "📝 Logger bắt đầu ghi vào: {}",
@@ -162,12 +144,10 @@ impl KeystrokeLogger {
         );
     }
 
-    /// Lấy số lượng event đã ghi
     pub fn event_count(&self) -> usize {
         self.event_count
     }
 
-    /// Lấy đường dẫn file log
     pub fn log_path(&self) -> PathBuf {
         self.get_log_path()
     }

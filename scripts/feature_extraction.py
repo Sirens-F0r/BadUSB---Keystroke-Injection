@@ -1,16 +1,5 @@
-"""
-Feature Extraction Script cho KDS Guard
-Tính toán đặc trưng Keystroke Dynamics từ dữ liệu thu thập.
-
-Input:  keystroke_log_*.csv (từ Rust collector)
-Output: features_dataset.csv
-
-Đặc trưng:
-  - Hold Time (HT): thời gian nhấn giữ phím
-  - Flight Time (FT): khoảng thời gian giữa các phím
-  - Thống kê: mean, std, median, IQR, CV
-  - Burst detection, typing speed
-"""
+# Trich xuat dac trung Keystroke Dynamics tu file keystroke log
+# Input: keystroke_log_*.csv -> Output: features_dataset.csv
 
 import os
 import glob
@@ -247,7 +236,7 @@ def process_all_logs(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="🔬 KDS Guard - Feature Extraction"
+        description="Feature Extraction"
     )
     parser.add_argument('-d', '--data-dir', default='data',
                         help='Thư mục chứa file keystroke log')
@@ -262,9 +251,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print("╔══════════════════════════════════════════╗")
-    print("║  🔬 KDS Guard - Feature Extraction       ║")
-    print("╚══════════════════════════════════════════╝")
+    print("=" * 42)
+    print("  KDS Guard - Feature Extraction")
+    print("=" * 42)
     print()
 
     process_all_logs(

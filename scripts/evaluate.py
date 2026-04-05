@@ -1,14 +1,4 @@
-"""
-Evaluation Script cho KDS Guard
-Đánh giá toàn diện hệ thống phát hiện BadUSB.
-
-Tests:
-  1. Rule-based detection accuracy
-  2. ML model performance
-  3. Hybrid detection
-  4. Latency measurement
-  5. False Positive analysis
-"""
+# Danh gia he thong phat hien BadUSB
 
 import os
 import sys
@@ -309,7 +299,7 @@ def evaluate_hybrid(df: pd.DataFrame, y_true: np.ndarray,
 
 
 def main():
-    parser = argparse.ArgumentParser(description="📋 KDS Guard - System Evaluation")
+    parser = argparse.ArgumentParser(description="System Evaluation")
     parser.add_argument('-d', '--data-dir', default='data')
     parser.add_argument('-f', '--features-file', default='features_dataset.csv')
     parser.add_argument('-m', '--model-dir', default='models')
@@ -317,9 +307,9 @@ def main():
 
     args = parser.parse_args()
 
-    print("╔══════════════════════════════════════════════════════╗")
-    print("║  📋 KDS Guard - Full System Evaluation               ║")
-    print("╚══════════════════════════════════════════════════════╝")
+    print("=" * 54)
+    print("  KDS Guard - Full System Evaluation")
+    print("=" * 54)
     print()
 
     # Load data

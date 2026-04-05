@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+"""
+KDS Guard WebSocket Bridge
+Ket noi Rust engine voi Dashboard qua WebSocket.
+
+Cach dung:
+  python ws_bridge.py
+
+Pipeline:
+  kds_guard.exe --json-output | python ws_bridge.py
+  Hoac:
+  python ws_bridge.py  (tu dong chay kds_guard.exe)
+
+Dashboard ket noi WebSocket tai ws://localhost:8765
+"""
+
+import asyncio
+import json
+import subprocess
+import sys
+import os
+
+try:
+    import websockets
+except ImportError:
+    print("Cai dat websockets: pip install websockets")
+    sys.exit(1)
+
+# Danh sach client dang ket noi
+CLIENTS = set()
+
+# Duong dan den kds_guard.exe
+KDS_GUARD_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "kds_guard", "target", "release", "kds_guard.exe"
+)
+
+# Fallback: dung debug build
+if not os.path.exists(KDS_GUARD_PATH):
+    KDS_GUARD_PATH = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "kds_guard", "target", "debug", "kds_guard.exe"
+    )
+
+
+async def register(websocket):
+    """Dang ky client moi"""
+    CLIENTS.add(websocket)
+    print(f"[BRIDGE] Client ket noi: {websocket.remote_address} (tong: {len(CLIENTS)})")
+    try:
+        await websocket.wait_closed()
+    finally:
+        CLIENTS.discard(websocket)
+        print(f"[BRIDGE] Client ngat: {websocket.remote_address} (tong: {len(CLIENTS)})")
+
+
+async def broadcast(message):
+    """Gui du lieu den tat ca client"""
+    if CLIENTS:
+        await asyncio.gather(
+            *[client.send(message) for client in CLIENTS],
+            return_exceptions=True
+        )
+
+
+async def read_stdin():
+    """Doc JSON tu stdin (pipe tu kds_guard.exe)"""
+    loop = asyncio.get_event_loop()
+    reader = asyncio.StreamReader()
+    protocol = asyncio.StreamReaderProtocol(reader)
+    await loop.connect_read_pipe(lambda: protocol, sys.stdin)
+
+    while True:
+        line = await reader.readline()
+        if not line:
+            break
+        line = line.decode().strip()
+        if line.startswith("{"):
+            try:
+                data = json.loads(line)
+                await broadcast(json.dumps(data))
+                risk = data.get("result", {}).get("risk_level", "?")
+                score = data.get("result", {}).get("risk_score", 0)
+                print(f"[BRIDGE] >> {risk} (score={score:.2f}) -> {len(CLIENTS)} clients")
+            except json.JSONDecodeError:
+                pass
+
+
+async def run_kds_guard():
+    """Tu dong chay kds_guard.exe voi --json-output"""
+    if not os.path.exists(KDS_GUARD_PATH):
+        print(f"[BRIDGE] Khong tim thay: {KDS_GUARD_PATH}")
+        print("[BRIDGE] Hay build truoc: cargo build --release")
+        print("[BRIDGE] Hoac pipe truc tiep: kds_guard.exe --json-output | python ws_bridge.py")
+        # Che do cho: chi chay WebSocket server, doi stdin
+        await read_stdin()
+        return
+
+    print(f"[BRIDGE] Khoi dong: {KDS_GUARD_PATH} --json-output")
+    process = await asyncio.create_subprocess_exec(
+        KDS_GUARD_PATH, "--json-output",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+
+    while True:
+        line = await process.stdout.readline()
+        if not line:
+            break
+        line = line.decode().strip()
+        if line.startswith("{"):
+            try:
+                data = json.loads(line)
+                await broadcast(json.dumps(data))
+                risk = data.get("result", {}).get("risk_level", "?")
+                score = data.get("result", {}).get("risk_score", 0)
+                print(f"[BRIDGE] >> {risk} (score={score:.2f}) -> {len(CLIENTS)} clients")
+            except json.JSONDecodeError:
+                pass
+
+
+async def main():
+    print()
+    print("=" * 50)
+    print("  KDS Guard WebSocket Bridge")
+    print("  Dashboard ket noi tai: ws://localhost:8765")
+    print("=" * 50)
+    print()
+
+    # Khoi dong WebSocket server
+    async with websockets.serve(register, "localhost", 8765):
+        print("[BRIDGE] WebSocket server dang chay tai ws://localhost:8765")
+
+        # Kiem tra co pipe stdin khong
+        if not sys.stdin.isatty():
+            print("[BRIDGE] Doc du lieu tu stdin (pipe mode)")
+            await read_stdin()
+        else:
+            print("[BRIDGE] Tu dong chay kds_guard.exe...")
+            await run_kds_guard()
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n[BRIDGE] Da dung.")

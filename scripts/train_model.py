@@ -1,15 +1,4 @@
-"""
-ML Model Training Script cho KDS Guard
-Huấn luyện mô hình phát hiện BadUSB injection.
-
-Models:
-  - Isolation Forest (anomaly detection)
-  - One-Class SVM (novelty detection)
-  - Random Forest (supervised, nếu có nhãn)
-
-Input:  features_dataset.csv
-Output: model.pkl, scaler.pkl, evaluation report
-"""
+# Huan luyen mo hinh ML phat hien BadUSB
 
 import os
 import sys
@@ -260,7 +249,7 @@ def evaluate_supervised_model(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="🤖 KDS Guard - ML Model Training")
+    parser = argparse.ArgumentParser(description="ML Model Training")
     parser.add_argument('-d', '--data-dir', default='data',
                         help='Thư mục dữ liệu')
     parser.add_argument('-f', '--features-file', default='features_dataset.csv',
@@ -274,9 +263,9 @@ def main():
 
     args = parser.parse_args()
 
-    print("╔══════════════════════════════════════════════╗")
-    print("║  🤖 KDS Guard - ML Model Training            ║")
-    print("╚══════════════════════════════════════════════╝")
+    print("=" * 46)
+    print("  KDS Guard - ML Model Training")
+    print("=" * 46)
     print()
 
     # Load data

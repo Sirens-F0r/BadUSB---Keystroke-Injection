@@ -1,9 +1,5 @@
-"""
-KDS Guard Dashboard - Streamlit
-Dashboard hiển thị realtime keystroke dynamics và detection results.
-
-Chạy: streamlit run dashboard.py
-"""
+# Dashboard hien thi realtime keystroke dynamics
+# Chay: streamlit run dashboard.py
 
 import os
 import time
@@ -17,7 +13,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# === Page Config ===
+
 st.set_page_config(
     page_title="KDS Guard Dashboard",
     page_icon="🛡️",
@@ -25,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# === Custom CSS ===
+
 st.markdown("""
 <style>
     .main-header {
@@ -61,7 +57,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# === Sidebar ===
+
 with st.sidebar:
     st.image("https://img.icons8.com/3d-fluency/94/shield.png", width=80)
     st.title("🛡️ KDS Guard")
@@ -84,7 +80,7 @@ with st.sidebar:
         refresh_rate = st.slider("Refresh interval (s)", 1, 30, 5)
 
 
-# === Helper Functions ===
+
 @st.cache_data(ttl=5)
 def load_features_data(data_dir: str) -> pd.DataFrame:
     """Load features dataset."""
@@ -116,7 +112,7 @@ def load_model_metadata(model_dir: str) -> dict:
 
 
 def compute_risk_score(features: dict, ft_thresh: float, cv_thresh: float, speed_thresh: float) -> float:
-    """Tính risk score đơn giản."""
+    """Tinh risk score."""
     score = 0.0
 
     if features.get('mean_flight_time', 999) < ft_thresh:
@@ -131,7 +127,7 @@ def compute_risk_score(features: dict, ft_thresh: float, cv_thresh: float, speed
     return min(score, 1.0)
 
 
-# === Main Content ===
+
 st.markdown('<div class="main-header">🛡️ KDS Guard Dashboard</div>', unsafe_allow_html=True)
 st.markdown('<p style="text-align:center; color:#888;">BadUSB Detection via Keystroke Dynamics Analysis</p>',
             unsafe_allow_html=True)
@@ -141,12 +137,12 @@ df_features = load_features_data(data_dir)
 df_log = load_keystroke_log(data_dir)
 metadata = load_model_metadata(model_dir)
 
-# === Tab Layout ===
+
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Overview", "🔍 Live Monitor", "📈 Analysis", "🤖 Model", "📋 Detection Log"
 ])
 
-# === TAB 1: Overview ===
+
 with tab1:
     st.subheader("System Overview")
 
@@ -201,7 +197,7 @@ with tab1:
             }
             st.table(pd.DataFrame(summary_data))
 
-# === TAB 2: Live Monitor ===
+
 with tab2:
     st.subheader("🔍 Real-time Typing Monitor")
 
@@ -275,7 +271,7 @@ with tab2:
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
-# === TAB 3: Analysis ===
+
 with tab3:
     st.subheader("📈 Keystroke Dynamics Analysis")
 
@@ -338,7 +334,7 @@ with tab3:
             fig.update_layout(height=500)
             st.plotly_chart(fig, use_container_width=True)
 
-# === TAB 4: Model ===
+
 with tab4:
     st.subheader("🤖 ML Model Performance")
 
@@ -386,7 +382,7 @@ with tab4:
             best = max(results, key=lambda r: r.get('f1_score', 0))
             st.success(f"🏆 Best Model: **{best['model_name']}** (F1: {best['f1_score']:.4f})")
 
-# === TAB 5: Detection Log ===
+
 with tab5:
     st.subheader("📋 Detection Log")
 
@@ -431,12 +427,12 @@ with tab5:
             "text/csv",
         )
 
-# === Auto Refresh ===
+
 if auto_refresh:
     time.sleep(refresh_rate)
     st.rerun()
 
-# === Footer ===
+
 st.markdown("---")
 st.markdown(
     '<p style="text-align:center; color:#888;">KDS Guard v0.1.0 | '

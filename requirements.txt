@@ -17,4 +17,7 @@ plotly>=5.15.0
 # Dashboard
 streamlit>=1.28.0
 
+# Keystroke collection
+pynput>=1.7.0
+
 # Utilities
