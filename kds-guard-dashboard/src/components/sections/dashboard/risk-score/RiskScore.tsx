@@ -1,5 +1,5 @@
 // KDS Guard – Risk Score Section
-// Thay thế Level: hiển thị risk score history chart
+// Hiển thị risk score history chart
 
 import { Box, Button, Divider, Paper, Stack, Typography, alpha, useTheme } from '@mui/material';
 import EChartsReactCore from 'echarts-for-react/lib/core';

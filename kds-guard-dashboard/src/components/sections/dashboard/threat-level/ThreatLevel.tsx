@@ -1,5 +1,5 @@
 // KDS Guard – Threat Level Indicator
-// Thay thế Earnings: hiển thị mức độ đe dọa hiện tại
+// Hiển thị mức độ đe dọa hiện tại
 
 import { Box, Paper, Typography } from '@mui/material';
 import ThreatGaugeChart from './ThreatGaugeChart';

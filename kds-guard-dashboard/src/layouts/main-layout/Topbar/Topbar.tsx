@@ -67,7 +67,7 @@ const Topbar = ({
             />
           </IconButton>
 
-          {/* System Status Indicator – thay thế search bar */}
+          {/* System Status Indicator */}
           <Stack
             direction="row"
             gap={2}

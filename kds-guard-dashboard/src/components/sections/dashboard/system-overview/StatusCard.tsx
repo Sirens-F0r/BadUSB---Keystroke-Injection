@@ -1,5 +1,5 @@
 // KDS Guard – Status Card Component
-// Thay thế SaleCard: hiển thị một metric bảo mật
+// Hiển thị một metric bảo mật
 
 import { ReactElement } from 'react';
 import { Box, Stack, Typography } from '@mui/material';

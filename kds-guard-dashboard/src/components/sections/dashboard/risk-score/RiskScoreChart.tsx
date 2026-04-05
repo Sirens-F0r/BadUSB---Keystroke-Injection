@@ -1,5 +1,5 @@
 // KDS Guard – Risk Score Chart
-// Thay thế LevelChart: biểu đồ risk score history
+// Biểu đồ risk score history
 
 import { SxProps, useTheme } from '@mui/material';
 import ReactEChart from 'components/base/ReactEChart';

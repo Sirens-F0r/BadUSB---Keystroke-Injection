@@ -1,5 +1,5 @@
 // KDS Guard – Activity Timeline Chart Section
-// Thay thế VisitorInsights: biểu đồ hoạt động gõ phím theo thời gian
+// Biểu đồ hoạt động gõ phím theo thời gian
 
 import { Box, Button, Paper, Stack, Typography } from '@mui/material';
 import ActivityTimelineChart from './ActivityTimelineChart';

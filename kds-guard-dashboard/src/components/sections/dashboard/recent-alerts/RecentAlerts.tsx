@@ -1,5 +1,5 @@
 // KDS Guard – Recent Alerts Section
-// Thay thế TrendingNow: hiển thị các cảnh báo gần đây
+// Hiển thị các cảnh báo gần đây
 
 import { ReactElement } from 'react';
 import { Box, Chip, Paper, Stack, Typography } from '@mui/material';

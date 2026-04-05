@@ -1,5 +1,5 @@
 // KDS Guard – Chart data: Activity timeline
-// Biểu đồ hoạt động theo thời gian (thay thế visitor insights)
+// Biểu đồ hoạt động theo thời gian
 
 export const activityTimelineData = [
   30, 45, 22, 38, 55, 12, 48, 65, 35, 28, 92, 45, 38, 25, 58, 72, 42, 15, 28, 85, 32, 48, 55, 38,
