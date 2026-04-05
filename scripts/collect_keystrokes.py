@@ -178,7 +178,7 @@ def show_collection_guide():
   Hiển thị đoạn văn trên màn hình, người dùng nhìn và gõ lại.
 
   Gợi ý đoạn văn:
-    "Trường Đại học Công nghệ Thông tin là một trong những trường
+    "Trường Đại học Công Nghệ Hutech là một trong những trường
     đại học hàng đầu Việt Nam về đào tạo và nghiên cứu trong lĩnh
     vực công nghệ thông tin và truyền thông."
 

@@ -9,8 +9,7 @@
 - **Sinh viên**: [Họ tên sinh viên]
 - **MSSV**: [Mã số sinh viên]
 - **GVHD**: [Họ tên giảng viên hướng dẫn]
-- **Trường**: Đại học Công nghệ TP.HCM (HUTECH)
-- **Khoa**: Công nghệ Thông tin
+- **Trường**: Trường Đại học Công Nghệ Hutech
 - **Năm học**: 2025–2026
 
 ---
