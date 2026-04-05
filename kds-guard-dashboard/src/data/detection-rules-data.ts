@@ -1,6 +1,6 @@
 // KDS Guard – Detection Rules Data
 // Đối chiếu chính xác từ detector.rs DetectorConfig::default()
-// 7 rules: ft_mean, cv_flight, speed, burst, ht_iqr, modifier_ratio, min_flight
+// 8 rules: ft_mean, cv_flight, speed, burst, ht_iqr, modifier_ratio, min_flight, injection_fingerprint
 
 export interface DetectionRule {
   id: string;

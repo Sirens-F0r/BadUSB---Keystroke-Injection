@@ -82,7 +82,7 @@ export const eventLogRows: GridRowsProp = [
     riskScore: 0.97,
     triggeredRules: 'R001, R002, R003, R005, R007',
     action: 'Soft Block',
-    details: 'ATTACK DETECTED – Input blocked. 5/7 rules triggered. Device isolated.',
+    details: 'ATTACK DETECTED – Input blocked. 6/8 rules triggered. Device isolated.',
   },
   {
     id: 9,

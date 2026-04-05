@@ -77,8 +77,8 @@ pub fn show_windows_notification(title: &str, message: &str, risk_level: &RiskLe
 
 /// Phan hoi theo muc do rui ro:
 /// - Medium: chi hien thong bao
-/// - High: block 2-3s + thong bao
-/// - Critical: block 3-10s + thong bao
+/// - High: block toi da 2s + thong bao
+/// - Critical: block toi da 5s + thong bao (timeout cung)
 pub fn execute_response(detection: &DetectionResult, block_duration_ms: u64) -> ResponseResult {
     let mut result = ResponseResult {
         blocked: false,

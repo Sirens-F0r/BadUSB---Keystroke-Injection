@@ -72,7 +72,7 @@ RUST_DIR   = "data/raw/rust"    # ← Rust collector output vào đây
 # ─────────────────────────────────────────────────────────────
 
 def _compute_features(ht: np.ndarray, ft: np.ndarray, meta: dict) -> dict:
-    """Tính toán 19 feature vectors từ mảng hold_times và flight_times."""
+    """Tính toán 22 feature vectors từ mảng hold_times và flight_times."""
     if len(ht) == 0:
         ht = np.array([100.0])
     if len(ft) == 0:

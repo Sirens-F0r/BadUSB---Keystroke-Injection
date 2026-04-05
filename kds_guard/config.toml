@@ -25,7 +25,7 @@ ft_mean_threshold_ms = 30.0
 # Ngưỡng CV Flight Time - dưới ngưỡng = gõ đều bất thường
 ft_cv_threshold = 0.15
 # Tốc độ gõ tối đa cho người thường (keys/s)
-max_human_speed = 15.0
+max_human_speed = 20.0
 # Ngưỡng burst length
 burst_length_threshold = 15
 # Ngưỡng Hold Time IQR (ms)

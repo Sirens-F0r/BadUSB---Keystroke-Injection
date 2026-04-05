@@ -8,7 +8,7 @@ const pipelineSteps = [
   { icon: 'mdi:keyboard', name: 'Collector', description: 'Captures raw keystroke events (key press/release timestamps) from the OS via low-level hooks.', color: 'info.main' },
   { icon: 'mdi:file-document-outline', name: 'Logger', description: 'Records keystroke timing data (flight time, hold time) and maintains sliding analysis windows.', color: 'primary.main' },
   { icon: 'mdi:function-variant', name: 'Feature Extractor', description: 'Computes behavioral features: mean/CV flight time, typing speed, burst length, modifier ratio, IQR hold time.', color: 'warning.main' },
-  { icon: 'mdi:target', name: 'Detector', description: 'Rule-based engine that evaluates 7 detection rules against computed features and produces a composite risk score.', color: 'error.main' },
+  { icon: 'mdi:target', name: 'Detector', description: 'Rule-based engine that evaluates 8 detection rules against computed features and produces a composite risk score.', color: 'error.main' },
   { icon: 'mdi:shield-lock-outline', name: 'Policy Engine', description: 'Determines response action (Allow/Log/Alert/Soft Block/Challenge) based on risk score and triggered rules.', color: 'success.main' },
 ];
 

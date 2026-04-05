@@ -177,7 +177,7 @@ export function useWindowsNotification() {
             rule_score: 0.65,
             reasons: [
                 'Flight time quá thấp (< 30ms)',
-                'Typing speed vượt ngưỡng (> 15 keys/s)',
+                'Typing speed vượt ngưỡng (> 20 keys/s)',
                 'Phát hiện burst injection (25 keys liên tiếp)',
             ],
             window_start_ms: Date.now() - 5000,
