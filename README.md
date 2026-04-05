@@ -4,7 +4,17 @@ Phát hiện & ngăn chặn tấn công chèn phím giả mạo (BadUSB) bằng 
 
 ## Tổng quan
 
-KDS Guard giám sát hành vi gõ phím theo thời gian thực, phân biệt giữa người thật và thiết bị tiêm phím tự động (BadUSB/Rubber Ducky). Khi phát hiện bất thường, hệ thống sẽ cảnh báo qua Windows notification và có thể chặn input tạm thời.
+KDS Guard giám sát hành vi gõ phím theo thời gian thực, phân biệt giữa người thật và thiết bị tiêm phím tự động (BadUSB/Rubber Ducky). Khi phát hiện bất thường, hệ thống cảnh báo qua Windows notification và chặn input tạm thời.
+
+### Kết quả thực nghiệm
+
+Đánh giá trên **21,035 mẫu** (20,803 người thật + 232 tấn công):
+
+| Chỉ số | Giá trị |
+|--------|---------|
+| **TPR (Recall)** | **98.7%** |
+| **FPR** | **0.0%** |
+| **F1 Score** | **99.3%** |
 
 ## Cấu trúc dự án
 
@@ -12,42 +22,66 @@ KDS Guard giám sát hành vi gõ phím theo thời gian thực, phân biệt gi
 DOANCOSO/
 ├── kds_guard/              # Rust engine (core)
 │   └── src/
-│       ├── main.rs         # Entry point, pipeline chính
+│       ├── main.rs         # Entry point + Early Warning Layer + JSON output
 │       ├── input_capture.rs# Thu thập sự kiện bàn phím
-│       ├── feature.rs      # Trích xuất đặc trưng (sliding window)
-│       ├── detector.rs     # Rule-based detection (7 rules)
-│       ├── policy.rs       # Quyết định phản hồi
+│       ├── feature.rs      # Trích xuất 22 đặc trưng (sliding window)
+│       ├── detector.rs     # Rule-based detection (8 rules)
+│       ├── policy.rs       # Quyết định phản hồi + Challenge mode
 │       ├── response.rs     # BlockInput API + Windows notification
 │       └── logger.rs       # Ghi log CSV
-├── kds-guard-dashboard/    # React dashboard (TypeScript + MUI)
-├── collector_tool/         # Tool thu thập dữ liệu Python
-├── scripts/                # Scripts phân tích & xử lý
-├── data/                   # Dataset keystroke logs + features
+├── ws_bridge.py            # WebSocket bridge (Rust → Dashboard real-time)
+├── kds-guard-dashboard/    # React dashboard (TypeScript + MUI + ECharts)
+├── collector_tool/         # Tool thu thập dữ liệu
+├── scripts/                # Scripts phân tích & demo
+│   ├── simulate_badusb.py  # Mô phỏng BadUSB (demo không cần USB thật)
+│   ├── evaluate_thresholds.py # Confusion matrix từ dataset
+│   ├── simulate_injection.py  # 4 loại injection pattern
+│   └── ...                 # generate_demo_data, feature_extraction, train_model
+├── data/                   # Dataset (21,035 samples)
 ├── baocao/                 # Tài liệu báo cáo đồ án
-└── models/                 # Mô hình (nếu có)
+└── models/                 # ML models (RF, IF, OCSVM)
 ```
 
 ## Pipeline xử lý
 
 ```
-Keyboard → Collector → Feature Extractor → Detector → Policy → Response
-                                              │
-                              ┌────────────────┼────────────────┐
-                              ▼                ▼                ▼
-                          Allow           Alert/Log      Block + Notify
+               ┌─────────────────────────────────────────┐
+               │           Early Warning (30 phím)       │──→ Cảnh báo sớm (~0.6s)
+               └─────────────────────────────────────────┘
+Keyboard → Collector → Feature Extractor → Detector (8 rules) → Policy → Response
+               │                                                            │
+               └─────── Cửa sổ chính (40 phím) ────────────────────────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    ▼               ▼               ▼
+                Allow          Alert/Log      Block + Notify
+                                                    │
+                              ┌─────────────────────┤
+                              ▼                     ▼
+                      --json-output          ws_bridge.py
+                              └────→ Dashboard (WebSocket)
 ```
 
-## Đặc trưng phân tích
+## 8 Detection Rules
 
-| Đặc trưng | Mô tả |
-|-----------|-------|
-| Flight Time | Thời gian giữa 2 phím liên tiếp |
-| Hold Time | Thời gian giữ phím |
-| CV Flight Time | Hệ số biến thiên (người thật > 0.3, máy < 0.15) |
-| Typing Speed | Tốc độ gõ (keys/s) |
-| Burst Detection | Chuỗi phím liên tiếp cực nhanh |
-| Modifier Ratio | Tỷ lệ phím Ctrl/Alt/Win/Shift |
-| IQR Hold Time | Độ phân tán hold time |
+| # | Rule | Điều kiện | Trọng số |
+|---|------|-----------|----------|
+| R1 | Flight Time thấp | mean_flight_time < 30ms | +0.30 |
+| R2 | CV thấp | cv_flight_time < 0.15 | +0.25 |
+| R3 | Tốc độ cao | speed > 20 keys/s AND ft < 50ms | +0.20~0.35 |
+| R4 | Burst dài | max_burst ≥ 15 phím < 50ms | +0.20 |
+| R5 | Hold Time đều | iqr_hold_time < 5ms | +0.15 |
+| R6 | Modifier nhiều | modifier_ratio > 40% | +0.10 |
+| R7 | Min Flight cực thấp | min_flight_time < 5ms | +0.10 |
+| R8 | Injection Fingerprint | pause giữa burst + CV < 0.3 | +0.15~0.25 |
+
+## 22 Đặc trưng
+
+- **Hold Time**: mean, std, median, IQR
+- **Flight Time**: mean, std, median, IQR, p5, p95, min, CV
+- **Behavioral**: typing_speed, modifier_ratio, special_ratio, max_burst_length
+- **Window**: window_start_ms, window_end_ms
+- **Injection Fingerprint**: inter_command_pause_count, pause_regularity, enter_after_burst
 
 ## Mức phản hồi
 
@@ -56,14 +90,15 @@ Keyboard → Collector → Feature Extractor → Detector → Policy → Respons
 | Normal | Cho phép, tiếp tục giám sát |
 | Low | Ghi log |
 | Medium | Hiện cảnh báo Windows |
-| High | Chặn input 2-3 giây + cảnh báo |
-| Critical | Chặn input 3-10 giây + cảnh báo |
+| High | Chặn input tối đa 2 giây + cảnh báo |
+| Critical | Chặn input tối đa 5 giây + cảnh báo (timeout cứng) |
 
 ## Cài đặt & Chạy
 
 ### Yêu cầu
 - Rust 1.70+
 - Node.js 18+ (cho dashboard)
+- Python 3.9+ (cho scripts)
 - Windows 10/11
 
 ### Build Rust engine
@@ -77,8 +112,29 @@ cargo build --release
 # Chạy với quyền Administrator (cần cho BlockInput)
 kds_guard.exe -w 40 -s 20 -u user_001
 
-# Chỉ thu thập dữ liệu (không detect)
+# Với JSON output (cho WebSocket bridge)
+kds_guard.exe --json-output -w 40 -s 20
+
+# Chỉ thu thập dữ liệu
 kds_guard.exe --collect-only -d 60 -u user_001
+```
+
+### Chạy WebSocket bridge (real-time Dashboard)
+```bash
+# Pipe từ engine
+kds_guard.exe --json-output | python ws_bridge.py
+
+# Dashboard kết nối tại ws://localhost:8765
+```
+
+### Demo BadUSB (không cần USB thật)
+```bash
+# Mở 2 terminal:
+# Terminal 1: Chạy KDS Guard
+kds_guard.exe -v
+
+# Terminal 2: Mô phỏng BadUSB
+python scripts/simulate_badusb.py --speed 50
 ```
 
 ### Chạy dashboard
@@ -86,6 +142,12 @@ kds_guard.exe --collect-only -d 60 -u user_001
 cd kds-guard-dashboard
 npm install
 npm run dev
+# Mở http://localhost:3000
+```
+
+### Đánh giá ngưỡng (confusion matrix)
+```bash
+python scripts/evaluate_thresholds.py
 ```
 
 ## Tham số CLI
@@ -100,13 +162,25 @@ npm run dev
 | `-v` | false | Verbose logging |
 | `--collect-only` | false | Chỉ thu thập, không detect |
 | `--log-keys` | false | Ghi key_code chi tiết |
+| `--json-output` | false | Xuất JSON ra stdout (cho WebSocket bridge) |
 
 ## Công nghệ
 
-- **Rust** – Engine chính (performance, memory safety)
-- **winapi** – BlockInput API, Windows MessageBox
-- **rdev** – Cross-platform keyboard capture
-- **React + TypeScript + MUI** – Dashboard giám sát
-- **Python** – Scripts phân tích dữ liệu
+| Thành phần | Công nghệ |
+|-----------|-----------|
+| Engine chính | Rust (performance, memory safety) |
+| Bắt phím | rdev (cross-platform keyboard capture) |
+| Chặn input | winapi – BlockInput API |
+| Dashboard | React + TypeScript + MUI + ECharts |
+| Real-time | WebSocket bridge (Python websockets) |
+| Phân tích | Python (pandas, matplotlib) |
+
+## Tài liệu
+
+| File | Nội dung |
+|------|---------|
+| `baocao/BAOCAO.md` | Báo cáo trình bày dự án A-Z |
+| `baocao/RESEARCH.md` | Tài liệu kỹ thuật cốt lõi |
+| `baocao/TIENDO.md` | Theo dõi tiến độ chi tiết |
 
 ## Đồ án Cơ sở – 2026
