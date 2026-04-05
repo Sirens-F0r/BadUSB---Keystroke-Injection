@@ -236,13 +236,13 @@ impl FeatureExtractor {
 
         let pause_count = pauses.len();
 
-        // CV cua cac khoang nghi
-        let pause_regularity = if pauses.len() >= 2 {
+        // CV cua cac khoang nghi (can >= 3 diem de co y nghia thong ke)
+        let pause_regularity = if pauses.len() >= 3 {
             let mean = pauses.iter().sum::<f64>() / pauses.len() as f64;
             let variance = pauses.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / pauses.len() as f64;
             if mean > 0.0 { variance.sqrt() / mean } else { 0.0 }
         } else {
-            1.0 // khong du du lieu → gia dinh la nguoi (CV cao)
+            1.0 // khong du du lieu (< 3 diem) → gia dinh la nguoi (CV cao)
         };
 
         // Ty le Enter xuat hien ngay sau burst

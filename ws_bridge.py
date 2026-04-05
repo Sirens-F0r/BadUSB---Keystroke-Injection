@@ -87,7 +87,7 @@ async def read_stdin():
 
 
 async def run_kds_guard():
-    """Tu dong chay kds_guard.exe voi --json-output"""
+    """Tu dong chay kds_guard.exe voi --json-output (auto-restart khi crash)"""
     if not os.path.exists(KDS_GUARD_PATH):
         print(f"[BRIDGE] Khong tim thay: {KDS_GUARD_PATH}")
         print("[BRIDGE] Hay build truoc: cargo build --release")
@@ -96,27 +96,41 @@ async def run_kds_guard():
         await read_stdin()
         return
 
-    print(f"[BRIDGE] Khoi dong: {KDS_GUARD_PATH} --json-output")
-    process = await asyncio.create_subprocess_exec(
-        KDS_GUARD_PATH, "--json-output",
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
+    max_restarts = 5
+    restart_count = 0
 
-    while True:
-        line = await process.stdout.readline()
-        if not line:
-            break
-        line = line.decode().strip()
-        if line.startswith("{"):
-            try:
-                data = json.loads(line)
-                await broadcast(json.dumps(data))
-                risk = data.get("result", {}).get("risk_level", "?")
-                score = data.get("result", {}).get("risk_score", 0)
-                print(f"[BRIDGE] >> {risk} (score={score:.2f}) -> {len(CLIENTS)} clients")
-            except json.JSONDecodeError:
-                pass
+    while restart_count < max_restarts:
+        print(f"[BRIDGE] Khoi dong: {KDS_GUARD_PATH} --json-output")
+        process = await asyncio.create_subprocess_exec(
+            KDS_GUARD_PATH, "--json-output",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        while True:
+            line = await process.stdout.readline()
+            if not line:
+                break
+            line = line.decode().strip()
+            if line.startswith("{"):
+                try:
+                    data = json.loads(line)
+                    await broadcast(json.dumps(data))
+                    risk = data.get("result", {}).get("risk_level", "?")
+                    score = data.get("result", {}).get("risk_score", 0)
+                    print(f"[BRIDGE] >> {risk} (score={score:.2f}) -> {len(CLIENTS)} clients")
+                except json.JSONDecodeError:
+                    pass
+
+        exit_code = await process.wait()
+        restart_count += 1
+
+        if restart_count < max_restarts:
+            print(f"[BRIDGE] kds_guard.exe da thoat (code={exit_code}). Tu khoi dong lai sau 3 giay... ({restart_count}/{max_restarts})")
+            await asyncio.sleep(3)
+        else:
+            print(f"[BRIDGE] kds_guard.exe da thoat {max_restarts} lan. Dung bridge.")
+
 
 
 async def main():

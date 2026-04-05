@@ -320,8 +320,11 @@ fn print_alert_box(detection: &detector::DetectionResult) {
 }
 
 fn truncate_str(s: &str, max_len: usize) -> String {
-    if s.len() > max_len {
-        format!("{}...", &s[..max_len - 3])
+    // Dem theo char thay vi byte de tranh cat giua ky tu UTF-8 (tieng Viet)
+    let char_count = s.chars().count();
+    if char_count > max_len {
+        let truncated: String = s.chars().take(max_len - 3).collect();
+        format!("{}...", truncated)
     } else {
         s.to_string()
     }

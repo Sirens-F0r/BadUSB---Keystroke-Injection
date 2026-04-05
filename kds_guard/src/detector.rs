@@ -175,7 +175,8 @@ impl Detector {
         }
 
         // Rule 8: Injection Fingerprint — khoang nghi deu giua cac cum go nhanh + Enter sau burst
-        if features.inter_command_pause_count >= 2 && features.pause_regularity < 0.3 {
+        // Can >= 3 khoang nghi de CV co y nghia thong ke (2 diem khong du tin cay)
+        if features.inter_command_pause_count >= 3 && features.pause_regularity < 0.3 {
             let mut contribution = 0.15;
             if features.enter_after_burst > 0.3 {
                 contribution += 0.1; // bonus: Enter sau burst = dang chay script tung dong

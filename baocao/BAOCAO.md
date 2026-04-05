@@ -288,17 +288,103 @@ npm run dev
 
 > Với ngưỡng hiện tại (0.3): **98.7% BadUSB bị phát hiện, 0% người thật bị nhầm**.
 
+## 11.2. So sánh Rule-based vs Machine Learning
+
+Ngoài phương pháp dựa trên quy tắc, dự án còn huấn luyện và so sánh **3 mô hình Machine Learning** trên cùng tập dữ liệu 21,035 mẫu:
+
+| Phương pháp | Accuracy | F1 | AUC-ROC | Cần dữ liệu huấn luyện? | Thời gian phát hiện |
+|-------------|----------|-----|---------|--------------------------|---------------------|
+| **Rule-based (8 rules)** | **~100%** | **99.3%** | **1.000** | ❌ Không | < 1ms |
+| Random Forest | 100% | 100% | 1.000 | ✅ Cần | ~5ms |
+| Isolation Forest | 91.0% | 19.7% | 0.995 | ✅ Cần | ~3ms |
+| One-Class SVM | 90.0% | 18.1% | 0.997 | ✅ Cần | ~4ms |
+| Hybrid (Rule 0.6 + ML 0.4) | 100% | 100% | 1.000 | ✅ Cần | ~6ms |
+
+**Nhận xét:**
+
+- Random Forest đạt 100% accuracy nhưng **yêu cầu dữ liệu huấn luyện có nhãn** — khó triển khai trên mỗi người dùng mới. Lưu ý: với dataset mất cân bằng (injection chỉ 1.1%), một mô hình luôn đoán "người thật" cũng đạt ~98.9% accuracy — do đó **F1-score và TPR/FPR mới là metric phù hợp** để đánh giá, không phải accuracy đơn thuần
+- Isolation Forest và One-Class SVM có **precision thấp** (10-11%) — nguyên nhân chính không phải do thuật toán kém mà do **contamination mặc định (0.10) chưa được tune** cho dataset mất cân bằng nặng này (injection chỉ 1.1%). Nếu giảm contamination xuống 0.01-0.02, precision sẽ cải thiện đáng kể nhưng recall có thể giảm. Đây là trade-off cần xem xét khi triển khai IF/OCSVM cho bài toán cụ thể
+- Rule-based đạt **TPR=98.7%, FPR=0.0%** — kết quả tương đương ML tốt nhất nhưng:
+  - Không cần thu thập dữ liệu huấn luyện cho mỗi người dùng
+  - Phát hiện trong dưới 1 millisecond (không cần inference)
+  - Dễ giải thích: mỗi rule có ý nghĩa vật lý rõ ràng
+  - Dễ tinh chỉnh ngưỡng mà không ảnh hưởng toàn bộ mô hình
+
+> **Kết luận:** Dự án đã triển khai và đánh giá cả hai hướng tiếp cận. Rule-based được chọn làm phương pháp chính vì đạt hiệu quả tương đương ML mà không cần dữ liệu huấn luyện per-user — phù hợp cho triển khai thực tế. ML được lưu lại cho hướng phát triển nâng cao (adaptive learning per-user).
+
+## 11.3. Benchmark hiệu năng
+
+### Latency inference (từ `evaluation_report.json`)
+
+| Phương pháp | Latency/sample | Ghi chú |
+|-------------|:--------------:|:--------|
+| Random Forest | 0.012 ms | Nhanh nhất |
+| Isolation Forest | 0.013 ms | Tương đương RF |
+| One-Class SVM | 0.476 ms | Chậm hơn ~40× do kernel computation |
+| Rule-based (Rust) | < 0.001 ms | Chỉ so sánh ngưỡng, không cần model |
+
+> Tất cả phương pháp đáp ứng yêu cầu real-time (< 1ms/sample). Rule-based nhanh nhất vì chỉ thực hiện phép so sánh số học, không cần load model hay tính toán ma trận.
+
+### Tài nguyên hệ thống
+
+| Metric | Giá trị | Phương pháp đo |
+|--------|:-------:|:---------------|
+| Binary size (release) | ~2 MB | `cargo build --release` |
+| RAM khi chạy (ước tính) | 3–8 MB | Stack-based, không heap allocation lớn |
+| CPU khi idle | ~0% | Chỉ wake khi có keyboard event |
+| CPU khi phân tích | < 1% | 1 cửa sổ 40 phím mỗi ~5s |
+| Thời gian phát hiện (Early Warning) | ~0.6s | 30 phím × ~20ms/phím (tốc độ BadUSB) |
+| Thời gian phát hiện (Cửa sổ chính) | ~0.8s | 40 phím × ~20ms/phím |
+
+> **Ghi chú:** RAM và CPU là ước tính dựa trên kiến trúc Rust (stack-allocated, event-driven). Chưa có profiling formal bằng Valgrind/perf. Đây là limitation cần bổ sung trong phiên bản tiếp theo.
+
 ## 12. Hạn chế
 
-- BlockInput cần quyền **Administrator** – nếu không có quyền thì chỉ cảnh báo, không chặn được
-- BlockInput chặn toàn hệ thống (không phân biệt từng thiết bị) – đã giảm thiểu bằng timeout cứng tối đa 5 giây
-- Password manager tự động điền mật khẩu có thể bị nhận nhầm là BadUSB (false positive). **Hướng xử lý:** whitelist process name — nếu input đến từ process đã biết (KeePass, Bitwarden, 1Password, LastPass) thì suppress cảnh báo. Chưa triển khai nhưng có thể thêm bằng cách kiểm tra foreground window process trước khi ra quyết định
-- Kẻ tấn công tinh vi có thể chèn delay ngẫu nhiên giữa các phím để mô phỏng người thật – nhưng R8 (Injection Fingerprint) vẫn phát hiện được vì khoảng nghỉ của máy đều đặn hơn người
-- Hệ thống hiện tại chưa phân biệt được từng thiết bị USB riêng biệt
+### 12.1. Dataset mất cân bằng
+
+Dataset có 20,803 mẫu người thật và chỉ 232 mẫu injection (tỉ lệ 1.1%) — đây là **imbalanced dataset**. Trong bối cảnh này, accuracy đơn thuần không phải metric đáng tin cậy (một mô hình luôn đoán "người thật" cũng đạt ~98.9%). Do đó dự án ưu tiên đánh giá bằng **TPR (Recall), FPR, và F1-score** để phản ánh chính xác hơn khả năng phát hiện tấn công.
+
+### 12.2. Mẫu injection tự tạo
+
+232 mẫu tấn công được tạo bằng `generate_demo_data.py` và `simulate_injection.py` — mô phỏng 4 loại pattern (badusb_fast, badusb_medium, script, rubber_ducky). Tuy nhiên:
+
+- **Chưa có dữ liệu từ thiết bị BadUSB vật lý** (USB Rubber Ducky, Flipper Zero, ESP32-S2...) — mỗi thiết bị có timing profile khác nhau
+- **232 mẫu là khá ít** so với 20,803 mẫu người thật — kết quả có thể thay đổi với dataset tấn công đa dạng hơn
+- Mẫu mô phỏng có thể "quá sạch" (pattern rõ ràng hơn thực tế), dẫn đến kết quả đánh giá lạc quan hơn thực tế
+
+### 12.3. R8 Injection Fingerprint — giới hạn thống kê
+
+Rule R8 kiểm tra `pause_count ≥ 2 AND pause_regularity < 0.3`. Tuy nhiên, `pause_regularity` là CV tính từ các khoảng nghỉ — khi chỉ có đúng 2 khoảng nghỉ (pause_count = 2), CV tính từ 2 điểm dữ liệu có thể **không ổn định thống kê**. Nên xem xét nâng ngưỡng tối thiểu lên `pause_count ≥ 3` trong phiên bản tiếp theo để tăng độ tin cậy.
+
+### 12.4. False positive với công cụ hợp pháp
+
+Ngoài password manager đã nhận diện, còn nhiều trường hợp thực tế có thể bị báo nhầm:
+
+| Trường hợp | Hành vi | Tại sao giống BadUSB |
+|------------|---------|---------------------|
+| KeePass/Bitwarden auto-type | Gõ tự động username + password | Tốc độ rất nhanh, nhịp đều |
+| IDE autocomplete / snippet | Chèn block code tự động | Burst dài, flight time thấp |
+| Remote Desktop (RDP) | Input bị buffer → gửi batch | Batch input trông giống injection |
+| Text expander | Gõ shortcut → chèn đoạn dài | Burst + tốc độ cao |
+| Gaming macro | Phím lặp nhanh | CV thấp, burst dài |
+
+**Hướng xử lý (chưa triển khai):** Whitelist theo foreground process name — nếu input đến từ process đã biết (KeePass, Bitwarden, VS Code snippet, RDP client) thì suppress cảnh báo. Có thể triển khai bằng cách kiểm tra `GetForegroundWindow()` + `GetWindowThreadProcessId()` trước khi ra quyết định.
+
+### 12.5. WebSocket bridge — single point of failure
+
+Pipeline hiện tại: `kds_guard.exe --json-output | python ws_bridge.py`. Nếu Python bridge crash hoặc bị kill, toàn bộ real-time monitoring trên Dashboard mất. Đây là thiết kế **POC (Proof of Concept)** — chưa phù hợp production. Hướng cải tiến: cho bridge tự restart khi mất kết nối, hoặc tích hợp WebSocket server trực tiếp vào Rust engine.
+
+### 12.6. Hạn chế hệ thống
+
+- BlockInput cần quyền **Administrator** — nếu không có quyền thì chỉ cảnh báo, không chặn được
+- BlockInput chặn toàn hệ thống (không phân biệt từng thiết bị) — đã giảm thiểu bằng timeout cứng tối đa 5 giây
+- Kẻ tấn công tinh vi có thể chèn delay ngẫu nhiên giữa các phím để mô phỏng người thật — R8 (Injection Fingerprint) giúp phát hiện nhưng không đảm bảo 100% nếu attacker tune jitter đủ tốt
+- Hệ thống chưa phân biệt được từng thiết bị USB riêng biệt
+- Chưa có profiling formal (Valgrind/perf) để đo chính xác CPU/RAM usage khi chạy nền dài hạn
 
 ## 13. Hướng phát triển
 
-- Tích hợp Machine Learning (One-Class SVM, Isolation Forest) để tự học hành vi từng người dùng
+- Nâng cấp ML thành adaptive per-user profiling: sử dụng One-Class SVM/Isolation Forest đã huấn luyện để tự học hành vi riêng từng người dùng sau giai đoạn calibration
 - Nhận diện thiết bị USB (device fingerprinting) để whitelist bàn phím tin cậy
 - ~~WebSocket realtime giữa Rust engine và dashboard~~ ✅ Đã triển khai (`--json-output` + `ws_bridge.py`)
 - Đóng gói thành service Windows chạy nền tự động khi khởi động

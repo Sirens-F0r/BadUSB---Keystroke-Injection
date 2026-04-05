@@ -9,7 +9,7 @@
 | # | Giai đoạn | Trạng thái | Ghi chú |
 |---|-----------|------------|---------|
 | 1 | Keystroke Collector (Rust) | ✅ Hoàn thành | 6 modules (main + 5 src) · build 2MB |
-| 2 | Feature Extraction (Python) | ✅ Hoàn thành | 16 features chuẩn hóa |
+| 2 | Feature Extraction (Python) | ✅ Hoàn thành | 22 features chuẩn hóa |
 | 3 | Demo Dataset Generator | ✅ Hoàn thành | 20 users + 4 injection types |
 | 4 | Tạo dữ liệu injection | ✅ Hoàn thành | 3 loại pattern riêng |
 | 5 | Detection Engine (Rule-based) | ✅ Hoàn thành | 8 rules (thêm R8 Injection Fingerprint) |
