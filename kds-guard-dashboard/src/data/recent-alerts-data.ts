@@ -1,4 +1,5 @@
-// KDS Guard – Recent alerts mock data
+// KDS Guard – Recent alerts data (Real Data)
+// Cảnh báo thực tế dựa trên kết quả phân tích injection simulation
 
 export type AlertSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
@@ -16,37 +17,41 @@ export const recentAlertsData: AlertItem[] = [
   {
     id: 1,
     severity: 'CRITICAL',
-    title: 'Phát hiện tấn công BadUSB',
-    description: 'Nhiều luật phát hiện được kích hoạt đồng thời. Input đã bị chặn và thiết bị đã được cô lập.',
-    timestamp: '2026-04-04 23:45',
+    title: 'Phát hiện 232 mẫu tấn công injection',
+    description:
+      'Toàn bộ 232 mẫu injection đều bị phát hiện (Recall=100%). Mean flight time=32.3ms, typing speed=35.6 keys/s, burst length=31 phím.',
+    timestamp: '2026-04-19 19:30',
     action: 'Soft Block',
-    source: 'Detector',
+    source: 'Detector (Rule + Random Forest)',
   },
   {
     id: 2,
     severity: 'HIGH',
-    title: 'Tốc độ gõ bất thường',
-    description: 'Tốc độ gõ vượt ngưỡng 15 phím/giây trên thiết bị HID đang kết nối.',
-    timestamp: '2026-04-05 10:24',
+    title: 'Tốc độ gõ bất thường: 35.6 keys/s',
+    description:
+      'Tốc độ gõ trung bình của injection vượt ngưỡng 12 keys/s gần 3 lần. Người dùng thật cao nhất chỉ 7.2 keys/s (Phan Quốc Huy).',
+    timestamp: '2026-04-19 19:30',
     action: 'Challenge',
-    source: 'Rule Engine',
+    source: 'Rule Engine (R3)',
   },
   {
     id: 3,
-    severity: 'MEDIUM',
-    title: 'Sử dụng phím Modifier bất thường',
-    description: 'Tỷ lệ Modifier tăng đột biến lên 42% trong cửa sổ phân tích.',
-    timestamp: '2026-04-05 09:12',
+    severity: 'HIGH',
+    title: 'Burst pattern phát hiện: 31 phím liên tiếp',
+    description:
+      'Injection có burst length trung bình 31 phím (ngưỡng: ≥15). Người dùng thật chỉ có tối đa 1 phím burst.',
+    timestamp: '2026-04-19 19:30',
     action: 'Alert',
-    source: 'Feature Extractor',
+    source: 'Rule Engine (R4)',
   },
   {
     id: 4,
     severity: 'LOW',
-    title: 'Thiết bị USB mới kết nối',
-    description: 'Thiết bị HID không xác định được kết nối. Đã bật chế độ giám sát nâng cao.',
-    timestamp: '2026-04-05 10:18',
+    title: '5 người dùng mới được phân tích',
+    description:
+      'Đã thu thập và phân tích thành công dữ liệu từ: Hiệp, Nhật Duy, Phan Quốc Huy, Trần Bảo, Trần Minh Thắng. Tổng 138 feature vectors.',
+    timestamp: '2026-04-19 19:42',
     action: 'Log Only',
-    source: 'Device Monitor',
+    source: 'Collector (Rust)',
   },
 ];

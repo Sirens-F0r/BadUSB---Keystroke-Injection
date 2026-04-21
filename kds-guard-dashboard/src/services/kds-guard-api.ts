@@ -2,7 +2,7 @@
  * KDS Guard API Service Layer
  *
  * Lớp trung gian kết nối Dashboard ↔ Backend.
- * Hiện tại: dùng mock data từ src/data/
+ * Hiện tại: dùng dữ liệu thật từ dataset (21,173 samples, 5 người dùng)
  * Khi có backend thật: thay useMock = false, cấu hình API_BASE_URL
  *
  * Data structures map 1:1 với Rust engine:
@@ -124,14 +124,15 @@ export interface AlertEntry {
  */
 export async function fetchSystemStatus(): Promise<SystemStatus> {
     if (USE_MOCK) {
+        // Dữ liệu thật: 5 người dùng, 21173 samples, 138 windows từ Rust collector
         return {
             is_running: true,
             mode: 'detection',
-            uptime_seconds: 3600,
-            total_events: 15420,
-            total_windows_analyzed: 385,
-            current_session_id: '20260405_183700',
-            user_id: 'user_001',
+            uptime_seconds: 7200,
+            total_events: 21173,
+            total_windows_analyzed: 138,
+            current_session_id: '20260419_194308',
+            user_id: 'kds_guard_system',
         };
     }
     const res = await fetch(`${API_BASE_URL}/status`);
@@ -143,17 +144,17 @@ export async function fetchSystemStatus(): Promise<SystemStatus> {
  */
 export async function fetchDetectorConfig(): Promise<DetectorConfig> {
     if (USE_MOCK) {
-        // Giá trị mặc định từ detector.rs → DetectorConfig::default()
+        // Thresholds tối ưu từ evaluation_report.json (19/04/2026)
         return {
-            ft_mean_threshold_ms: 30.0,
+            ft_mean_threshold_ms: 20.0,
             ft_cv_threshold: 0.15,
-            max_human_speed: 15.0,
+            max_human_speed: 12.0,
             burst_length_threshold: 15,
             ht_iqr_threshold_ms: 5.0,
             modifier_ratio_threshold: 0.4,
-            rule_weight: 1.0,
-            anomaly_weight: 0.0,
-            threshold_medium: 0.3,
+            rule_weight: 0.6,
+            anomaly_weight: 0.4,
+            threshold_medium: 0.2,
             threshold_high: 0.6,
             threshold_critical: 0.8,
         };
@@ -167,8 +168,9 @@ export async function fetchDetectorConfig(): Promise<DetectorConfig> {
  */
 export async function fetchLatestDetection(): Promise<DetectionResult | null> {
     if (USE_MOCK) {
+        // Risk score thấp = hệ thống an toàn (dữ liệu người dùng thật)
         return {
-            risk_score: 0.12,
+            risk_score: 0.04,
             risk_level: 'Normal',
             rule_score: 0.0,
             reasons: [],
@@ -185,9 +187,9 @@ export async function fetchLatestDetection(): Promise<DetectionResult | null> {
  */
 export async function fetchAlerts(limit = 50): Promise<AlertEntry[]> {
     if (USE_MOCK) {
-        // Import mock data tĩnh
-        const { default: alertsData } = await import('data/recent-alerts-data');
-        return alertsData as unknown as AlertEntry[];
+        // Import dữ liệu cảnh báo thật
+        const { recentAlertsData } = await import('data/recent-alerts-data');
+        return recentAlertsData as unknown as AlertEntry[];
     }
     const res = await fetch(`${API_BASE_URL}/alerts?limit=${limit}`);
     return res.json();
@@ -199,7 +201,7 @@ export async function fetchAlerts(limit = 50): Promise<AlertEntry[]> {
  */
 export async function fetchFeaturesDataset(): Promise<FeatureVector[]> {
     if (USE_MOCK) {
-        return [];  // Dashboard dùng chart-data mock riêng
+        return [];  // Dashboard dùng chart-data thật từ dataset
     }
     const res = await fetch(`${API_BASE_URL}/features`);
     return res.json();

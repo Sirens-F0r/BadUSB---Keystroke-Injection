@@ -357,6 +357,11 @@ def convert_rust_collected(
         try:
             df = pd.read_csv(filepath)
 
+            # ── Auto-detect format thay thế ──
+            if _is_alternative_format(df):
+                print(f"(alt format detected) ", end="")
+                df = _convert_alternative_format(df, filename=fname)
+
             if len(df) < 80:
                 print(f"⚠️  Too few events ({len(df)}), skip")
                 continue
@@ -388,6 +393,92 @@ def convert_rust_collected(
 
 
 # ─────────────────────────────────────────────────────────────
+# HELPER: Auto-detect & convert alternative CSV formats
+# (format từ web collector / tool khác của bạn bè)
+# ─────────────────────────────────────────────────────────────
+
+# Danh sách modifier keys để phân loại
+_MODIFIER_KEYS = {
+    'shift_l', 'shift_r', 'shift', 'ctrl_l', 'ctrl_r', 'control',
+    'alt_l', 'alt_r', 'alt', 'win_l', 'win_r', 'meta', 'meta_l', 'meta_r',
+    'capslock', 'caps_lock', 'numlock', 'scrolllock',
+}
+
+_SPECIAL_KEYS = {
+    'backspace', 'tab', 'enter', 'return', 'escape', 'esc',
+    'delete', 'insert', 'home', 'end', 'pageup', 'pagedown',
+    'up', 'down', 'left', 'right',
+    'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7', 'f8', 'f9', 'f10', 'f11', 'f12',
+    'space', 'semicolon', 'comma', 'period', 'slash', 'backslash',
+    'bracketleft', 'bracketright', 'quote', 'backquote', 'minus', 'equal',
+    'printscreen', 'pause', 'menu',
+}
+
+
+def _convert_alternative_format(df: pd.DataFrame, filename: str = "") -> pd.DataFrame:
+    """
+    Chuyển đổi format CSV thay thế sang format chuẩn.
+
+    Format thay thế (từ web collector / tool bạn bè):
+      Lan_Go, Key, Event_Type, Dwell_Time_ms, Flight_Time_ms, Timestamp
+
+    Format chuẩn (hệ thống yêu cầu):
+      timestamp_ms, key_code, event_type, key_class, is_modifier, session_id, user_id
+    """
+    converted = pd.DataFrame()
+
+    # Timestamp → timestamp_ms
+    converted['timestamp_ms'] = df['Timestamp'].astype(float)
+
+    # Key → key_code (giữ nguyên tên phím)
+    converted['key_code'] = df['Key'].astype(str).str.strip()
+
+    # Event_Type: KeyDown→down, KeyUp→up
+    converted['event_type'] = df['Event_Type'].str.replace('KeyDown', 'down').str.replace('KeyUp', 'up')
+
+    # Phân loại key_class dựa trên tên phím
+    def classify_key(key: str) -> str:
+        k = key.lower().strip()
+        if k in _MODIFIER_KEYS:
+            return 'modifier'
+        if k in _SPECIAL_KEYS:
+            return 'special'
+        if len(k) == 1 and k.isdigit():
+            return 'digit'
+        if len(k) == 1 and k.isalpha():
+            return 'alpha'
+        return 'special'
+
+    converted['key_class'] = converted['key_code'].apply(classify_key)
+
+    # is_modifier
+    converted['is_modifier'] = converted['key_code'].apply(
+        lambda k: k.lower().strip() in _MODIFIER_KEYS
+    )
+
+    # session_id từ cột Lan_Go
+    lan_go = df['Lan_Go'].astype(str).iloc[0] if 'Lan_Go' in df.columns else '1'
+    # user_id từ tên file (loại bỏ extension)
+    user_id = Path(filename).stem if filename else 'unknown'
+    # Làm sạch user_id
+    user_id = user_id.strip().replace(' ', '_').lower()
+
+    converted['session_id'] = f"{user_id}_lan{lan_go}"
+    converted['user_id'] = user_id
+
+    # Sort theo timestamp
+    converted = converted.sort_values('timestamp_ms').reset_index(drop=True)
+
+    return converted
+
+
+def _is_alternative_format(df: pd.DataFrame) -> bool:
+    """Kiểm tra xem file CSV có phải format thay thế không."""
+    alt_columns = {'Lan_Go', 'Key', 'Event_Type', 'Timestamp'}
+    return alt_columns.issubset(set(df.columns))
+
+
+# ─────────────────────────────────────────────────────────────
 # HELPER: Sliding window feature extraction
 # (dùng chung cho Nguồn 2 và Nguồn 3)
 # ─────────────────────────────────────────────────────────────
@@ -404,9 +495,9 @@ def _compute_window_features(
     """
     Tính features theo cửa sổ trượt từ raw keystroke log CSV.
 
-    Format CSV yêu cầu:
-      timestamp_ms, key_code, event_type (down/up),
-      key_class, is_modifier, session_id, user_id
+    Hỗ trợ 2 format:
+      Format chuẩn: timestamp_ms, key_code, event_type (down/up), ...
+      Format thay thế: Lan_Go, Key, Event_Type (KeyDown/KeyUp), Dwell_Time_ms, Flight_Time_ms, Timestamp
     """
     required = ['timestamp_ms', 'event_type']
     for col in required:

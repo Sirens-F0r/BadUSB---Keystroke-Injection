@@ -1,9 +1,0 @@
-timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
-timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
-42.3826,ShiftRight,up,modifier,true,20260308_111742,Duong_Thanh_Mong_s1
-timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
-65.71589999999999,Minus,up,other,false,20260308_111742,Duong_Thanh_Mong_s1
-timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
-11025.9728,Return,down,special,false,20260308_111742,Duong_Thanh_Mong_s1
-timestamp_ms,key_code,event_type,key_class,is_modifier,session_id,user_id
-11105.637700000001,Return,up,special,false,20260308_111742,Duong_Thanh_Mong_s1
