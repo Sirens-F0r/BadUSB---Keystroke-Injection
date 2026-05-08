@@ -16,9 +16,10 @@ Phát hiện & ngăn chặn tấn công chèn phím giả mạo (BadUSB) bằng 
   - [Bước 2: Cài đặt Python dependencies](#bước-2-cài-đặt-python-dependencies)
   - [Bước 3: Build Rust engine](#bước-3-build-rust-engine)
   - [Bước 4: Cài đặt Dashboard](#bước-4-cài-đặt-dashboard)
-  - [Bước 5: Chạy hệ thống hoàn chỉnh](#bước-5-chạy-hệ-thống-hoàn-chỉnh)
-  - [Bước 6: Chạy Demo nhanh](#bước-6-chạy-demo-nhanh)
-  - [Bước 7: Pipeline huấn luyện & đánh giá](#bước-7-pipeline-huấn-luyện--đánh-giá)
+  - [Bước 5: Xử lý dữ liệu thô & tích hợp dataset](#bước-5-xử-lý-dữ-liệu-thô--tích-hợp-dataset)
+  - [Bước 6: Huấn luyện model & đánh giá](#bước-6-huấn-luyện-model--đánh-giá)
+  - [Bước 7: Chạy hệ thống hoàn chỉnh](#bước-7-chạy-hệ-thống-hoàn-chỉnh)
+- [Chạy Demo nhanh](#chạy-demo-nhanh)
 - [8 Detection Rules](#8-detection-rules)
 - [22 Đặc trưng](#22-đặc-trưng)
 - [Mức phản hồi](#mức-phản-hồi)
@@ -248,9 +249,267 @@ Dashboard sẽ chạy tại `http://localhost:3000`. Mở trình duyệt truy c�
 
 ---
 
-### Bước 5: Chạy hệ thống hoàn chỉnh
+### Bước 5: Xử lý dữ liệu thô & tích hợp dataset
 
-Hệ thống gồm **3 thành phần** chạy song song. Mở **3 terminal riêng biệt**:
+Đây là bước **quan trọng nhất** — chuyển đổi dữ liệu gõ phím thô từ bạn bè thành feature vectors để huấn luyện model.
+
+#### 5.1. Dữ liệu thô là gì?
+
+Dữ liệu được thu thập bằng tool `KDS_Guard_ThuThap.zip` (nằm trong `collector_tool/`). Bạn gửi file zip này cho bạn bè, họ chạy `thu_thap_rust.bat`, sau đó gửi lại **các file CSV**.
+
+Mỗi file CSV có format:
+
+```csv
+Lan_Go,Key,Event_Type,Dwell_Time_ms,Flight_Time_ms,Timestamp
+1,s,KeyDown,,0,1776546218472.67
+1,s,KeyUp,107.88,,1776546218580.55
+1,i,KeyDown,,82.03,1776546218662.58
+```
+
+| Cột | Ý nghĩa |
+| --- | --- |
+| `Lan_Go` | Số thứ tự session (lần gõ) |
+| `Key` | Phím được nhấn |
+| `Event_Type` | `KeyDown` hoặc `KeyUp` |
+| `Dwell_Time_ms` | Thời gian giữ phím (ms) — chỉ có ở KeyUp |
+| `Flight_Time_ms` | Thời gian giữa 2 phím liên tiếp (ms) — chỉ có ở KeyDown |
+| `Timestamp` | Thời điểm sự kiện (epoch ms) |
+
+> 💡 Script `integrate_datasets.py` **tự động nhận diện** format này và chuyển đổi sang format chuẩn nội bộ.
+
+#### 5.2. Đặt file vào đâu?
+
+Copy **tất cả file CSV** từ bạn bè vào thư mục:
+
+```
+data/raw/rust/
+```
+
+Cấu trúc sau khi copy:
+
+```
+data/
+└── raw/
+    ├── DSL-StrongPasswordData.csv    ← Dataset CMU Benchmark (có sẵn)
+    └── rust/
+        ├── hiep.csv                  ← File từ bạn bè
+        ├── Nhất Duy.csv
+        ├── Phan Quốc Huy.csv
+        ├── Trần Bảo.csv
+        ├── trần minh thắng.csv
+        └── ... (thêm file mới vào đây)
+```
+
+> ⚠️ **Lưu ý:** Cứ copy thêm file mới vào, **không cần xóa file cũ**. Tên file sẽ được dùng làm `user_id`.
+
+#### 5.3. Chạy xử lý dữ liệu
+
+**Bước 3.1 — Xem trạng thái dataset hiện tại:**
+
+```bash
+python scripts/integrate_datasets.py --status
+```
+
+Output mẫu:
+
+```
+📊 Dataset Status
+============================================================
+   🗂️  Dataset CHÍNH (merged): 21,035 rows | human:20803 + injection:232
+   1️⃣  CMU Benchmark: 20,400 rows
+   3️⃣  Rust Collector: 403 rows
+   💉 Injection Simulated: 232 rows
+   Rust raw files in data/raw/rust/: 5 file(s)
+============================================================
+```
+
+**Bước 3.2 — Chuyển đổi dữ liệu thô Rust → features:**
+
+```bash
+python scripts/integrate_datasets.py --rust-collect
+```
+
+Lệnh này sẽ:
+1. Quét tất cả file CSV trong `data/raw/rust/`
+2. Tự động nhận diện format (chuẩn hoặc format thay thế từ tool bạn bè)
+3. Chuyển đổi mỗi file thành format chuẩn: `timestamp_ms, key_code, event_type, key_class, is_modifier, session_id, user_id`
+4. Trích xuất features theo cửa sổ trượt (window_size=40, slide_step=20)
+5. Lưu kết quả vào `data/features_rust_collected.csv`
+
+Output mẫu:
+
+```
+📂 [NGUỒN 3] Rust Collector (kds_guard.exe)
+============================================================
+   Found: 5 file(s)
+   📄 hiep.csv ... (alt format detected) ✅ 12 windows
+   📄 Nhất Duy.csv ... (alt format detected) ✅ 18 windows
+   📄 Phan Quốc Huy.csv ... (alt format detected) ✅ 14 windows
+   📄 Trần Bảo.csv ... (alt format detected) ✅ 22 windows
+   📄 trần minh thắng.csv ... (alt format detected) ✅ 28 windows
+
+   ✅ Total: 94 feature vectors (Rust collector)
+   💾 Saved: data/features_rust_collected.csv
+```
+
+**Bước 3.3 — (Tùy chọn) Chuyển đổi dataset CMU Benchmark:**
+
+```bash
+python scripts/integrate_datasets.py --cmu
+```
+
+**Bước 3.4 — Gộp tất cả nguồn dữ liệu:**
+
+```bash
+python scripts/integrate_datasets.py --merge
+```
+
+Lệnh `--merge` sẽ gộp các file:
+- `features_cmu.csv` (CMU Benchmark — 20,400 samples human)
+- `features_rust_collected.csv` (Rust Collector — dữ liệu bạn bè)
+- `features_self_collected.csv` (Python Collector — nếu có)
+- `features_demo.csv` (Synthetic — nếu có)
+- `features_injection.csv` (Injection simulated — 232 samples)
+
+→ Thành **1 file duy nhất**: `data/features_dataset.csv`
+
+**Hoặc chạy tất cả 1 lệnh:**
+
+```bash
+python scripts/integrate_datasets.py --rust-collect --merge
+```
+
+**Hoặc dùng script tích hợp:**
+
+```bash
+integrate_all.bat
+```
+
+#### 5.4. Sơ đồ pipeline xử lý dữ liệu
+
+```
+Bạn bè gõ phím → thu_thap_rust.bat → CSV files (format thay thế)
+                                          │
+                            gửi lại bạn   │
+                                          ▼
+                               data/raw/rust/ ← copy vào đây
+                                          │
+          python integrate_datasets.py --rust-collect --merge
+                                          │
+                    ┌─────────────────────┼─────────────────────┐
+                    │                     │                     │
+              Auto-detect            Chuyển đổi            Trích xuất
+              format CSV        → format chuẩn          features (22 đặc trưng)
+                                                              │
+                                                              ▼
+                                              features_dataset.csv (cập nhật)
+                                                              │
+                                  ┌───────────────────────────┼───────────┐
+                                  ▼                           ▼           ▼
+                           train_model.py              evaluate.py  visualize.py
+                                  │
+                                  ▼
+                          models/ (RF, IF, OCSVM)
+```
+
+---
+
+### Bước 6: Huấn luyện model & đánh giá
+
+Sau khi đã có `data/features_dataset.csv` từ Bước 5, tiến hành huấn luyện model ML.
+
+#### 6.1. Huấn luyện model
+
+```bash
+python scripts/train_model.py -d data -m models
+```
+
+Script sẽ tự động:
+1. Đọc `data/features_dataset.csv`
+2. Tách train/test (80/20)
+3. Huấn luyện **3 model**:
+   - 🌲 **Isolation Forest** — Anomaly detection (unsupervised)
+   - 🔮 **One-Class SVM** — Anomaly detection (unsupervised)
+   - 🌳 **Random Forest** — Classification (supervised)
+4. Đánh giá từng model trên test set
+5. Lưu model tốt nhất vào `models/model.pkl`
+
+Output mẫu:
+
+```
+🌲 Training Isolation Forest...
+   Samples: 16828, Features: 16
+   ✅ Done
+
+🌳 Training Random Forest (Supervised)...
+   Samples: 16828, Features: 16
+   ✅ Done
+
+🏆 Best model: Random Forest (F1: 0.9932)
+
+✅ Models saved to models/
+   - model.pkl (best)
+   - scaler.pkl
+   - training_metadata.json
+```
+
+Các file được tạo trong `models/`:
+
+| File | Nội dung |
+| --- | --- |
+| `model.pkl` | Model tốt nhất (tự động chọn) |
+| `isolation_forest.pkl` | Isolation Forest model |
+| `oneclass_svm.pkl` | One-Class SVM model |
+| `random_forest.pkl` | Random Forest model |
+| `scaler.pkl` | StandardScaler (chuẩn hóa features) |
+| `training_metadata.json` | Thông tin training (timestamp, metrics) |
+
+#### 6.2. Đánh giá hệ thống
+
+```bash
+python scripts/evaluate.py -d data -m models
+```
+
+Script đánh giá 4 phương pháp:
+1. **Rule-based** — 8 rules tự viết
+2. **Isolation Forest** — ML anomaly detection
+3. **One-Class SVM** — ML anomaly detection
+4. **Random Forest** — ML supervised
+5. **Hybrid** — Kết hợp Rule + ML
+
+Kết quả lưu vào `data/evaluation_report.json`.
+
+#### 6.3. Đánh giá ngưỡng (confusion matrix chi tiết)
+
+```bash
+python scripts/evaluate_thresholds.py
+```
+
+#### 6.4. Tạo biểu đồ trực quan
+
+```bash
+python scripts/visualize.py -d data -o plots -m models
+```
+
+Biểu đồ được lưu trong thư mục `plots/`.
+
+#### 6.5. Chạy tất cả tự động (1 lệnh)
+
+```bash
+# Cách 1: Dùng script Python
+python scripts/run_pipeline.py
+
+# Cách 2: Dùng script BAT
+run_pipeline.bat
+```
+
+---
+
+### Bước 7: Chạy hệ thống hoàn chỉnh
+
+Sau khi đã build engine (Bước 3), cài dashboard (Bước 4), và có model (Bước 6), chạy hệ thống real-time gồm **3 thành phần** song song.
+
+Mở **3 terminal riêng biệt**:
 
 #### Terminal 1 — Rust Engine + WebSocket Bridge
 
@@ -303,7 +562,7 @@ python scripts/simulate_injection.py --type fast --delay 2
 
 ---
 
-### Bước 6: Chạy Demo nhanh
+## Chạy Demo nhanh
 
 Dùng script demo tích hợp sẵn, bao gồm 3 kịch bản:
 
@@ -312,62 +571,10 @@ demo.bat
 ```
 
 | Demo | Mô tả | Kết quả mong đợi |
-|------|--------|-------------------|
+| --- | --- | --- |
 | **Demo 1** | Người gõ bình thường → Notepad | Risk: **NORMAL** ✅ |
 | **Demo 2** | Injection simulator gõ siêu nhanh | Risk: **CRITICAL** 🔴 |
 | **Demo 3** | Dashboard Streamlit (phân tích) | Hiển thị biểu đồ 📊 |
-
----
-
-### Bước 7: Pipeline huấn luyện & đánh giá
-
-Nếu muốn chạy lại toàn bộ pipeline (tạo data → train model → đánh giá → biểu đồ):
-
-#### Cách 1: Script tự động
-
-```bash
-run_pipeline.bat
-```
-
-Pipeline sẽ thực hiện 5 bước tự động:
-1. Cài Python dependencies
-2. Tạo demo dataset
-3. Huấn luyện ML models (Random Forest, Isolation Forest, OCSVM)
-4. Đánh giá hệ thống (confusion matrix, accuracy, F1)
-5. Tạo biểu đồ trực quan
-
-#### Cách 2: Chạy từng bước thủ công
-
-```bash
-# 1. Tạo dữ liệu demo
-python scripts/generate_demo_data.py -d data -n 20
-
-# 2. Tích hợp dataset (nếu có nhiều nguồn)
-python scripts/integrate_datasets.py --merge
-# Hoặc dùng script tích hợp:
-# integrate_all.bat
-
-# 3. Huấn luyện model
-python scripts/train_model.py -d data -m models
-
-# 4. Đánh giá
-python scripts/evaluate.py -d data -m models
-python scripts/evaluate_thresholds.py
-
-# 5. Tạo biểu đồ
-python scripts/visualize.py -d data -o plots -m models
-```
-
-#### Thu thập dữ liệu thực tế
-
-Nếu muốn thu thập dữ liệu gõ phím thật:
-
-```bash
-# Thu thập 60 giây
-kds_guard\target\release\kds_guard.exe --collect-only -d 60 -u ten_nguoi_dung
-
-# Dữ liệu sẽ được lưu vào thư mục data/
-```
 
 ---
 
