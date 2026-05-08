@@ -244,7 +244,7 @@ Kiểm tra bằng cách chạy thử:
 npm run dev
 ```
 
-Dashboard sẽ chạy tại `http://localhost:5173`. Mở trình duyệt truy cập để kiểm tra, sau đó nhấn `Ctrl+C` trong terminal để dừng.
+Dashboard sẽ chạy tại `http://localhost:3000`. Mở trình duyệt truy cập để kiểm tra, sau đó nhấn `Ctrl+C` trong terminal để dừng.
 
 ---
 
@@ -283,7 +283,7 @@ cd kds-guard-dashboard
 npm run dev
 ```
 
-Sau khi chạy, mở trình duyệt tại: **http://localhost:5173**
+Sau khi chạy, mở trình duyệt tại: **http://localhost:3000**
 
 Dashboard sẽ tự động kết nối WebSocket tại `ws://localhost:8765` và hiển thị dữ liệu real-time.
 
