@@ -1,0 +1,58 @@
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.kdsguard.app",
+  "productName": "KDS Guard",
+  "copyright": "Copyright 2026 — KDS Guard Project",
+  "directories": {
+    "output": "release",
+    "buildResources": "public"
+  },
+  "files": [
+    "dist/**/*",
+    "dist-electron/**/*",
+    "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+    "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+    "!**/node_modules/*.d.ts",
+    "!**/node_modules/.bin"
+  ],
+  "extraResources": [
+    {
+      "from": ".",
+      "to": "project_root",
+      "filter": [
+        "ws_bridge.py",
+        "kds_guard/**/*",
+        "data/**/*",
+        "models/**/*",
+        "scripts/**/*"
+      ]
+    }
+  ],
+  "asar": true,
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "artifactName": "${productName}-${version}-${arch}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "KDS Guard"
+  },
+  "portable": {
+    "artifactName": "${productName}-${version}-portable.${ext}"
+  },
+  "electronDownload": {
+    "mirror": "https://npmmirror.com/mirrors/electron/"
+  }
+}

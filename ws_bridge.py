@@ -20,6 +20,8 @@ import subprocess
 import sys
 import os
 
+sys.stdout.reconfigure(encoding='utf-8')
+
 try:
     import websockets
 except ImportError:
@@ -100,11 +102,11 @@ async def run_kds_guard():
     restart_count = 0
 
     while restart_count < max_restarts:
-        print(f"[BRIDGE] Khoi dong: {KDS_GUARD_PATH} --json-output")
+        print(f"[BRIDGE] Khoi dong: {KDS_GUARD_PATH} --json-output -u test")
         process = await asyncio.create_subprocess_exec(
-            KDS_GUARD_PATH, "--json-output",
+            KDS_GUARD_PATH, "--json-output", "-u", "test",
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
         )
 
         while True:
@@ -134,24 +136,30 @@ async def run_kds_guard():
 
 
 async def main():
-    print()
-    print("=" * 50)
+    sys.stdout.reconfigure(encoding='utf-8')
+    print("==================================================")
     print("  KDS Guard WebSocket Bridge")
     print("  Dashboard ket noi tai: ws://localhost:8765")
-    print("=" * 50)
-    print()
+    print("==================================================")
+    print("[BRIDGE] Khoi dong...")
 
-    # Khoi dong WebSocket server
-    async with websockets.serve(register, "localhost", 8765):
-        print("[BRIDGE] WebSocket server dang chay tai ws://localhost:8765")
+    # Khoi dong WebSocket server + engine dong thoi
+    # WebSocket server + engine chay song song
+    async def ws_server_task():
+        try:
+            async with websockets.serve(register, "localhost", 8765):
+                print("[BRIDGE] WebSocket server dang chay tai ws://localhost:8765")
+                print("[BRIDGE] Dashboard mo: http://localhost:3000")
+                print("[BRIDGE] Dong y bang Ctrl+C de dung.")
+                print()
+                await asyncio.Future()  # Chờ vĩnh viễn
+        except Exception as e:
+            print(f"[BRIDGE] WebSocket error: {e}")
 
-        # Kiem tra co pipe stdin khong
-        if not sys.stdin.isatty():
-            print("[BRIDGE] Doc du lieu tu stdin (pipe mode)")
-            await read_stdin()
-        else:
-            print("[BRIDGE] Tu dong chay kds_guard.exe...")
-            await run_kds_guard()
+    asyncio.ensure_future(ws_server_task())
+    await asyncio.sleep(0.5)  # Đợi server khởi động
+    asyncio.ensure_future(run_kds_guard())
+    await asyncio.Future()  # Chờ vĩnh viễn
 
 
 if __name__ == "__main__":

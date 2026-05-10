@@ -854,9 +854,10 @@ Ví dụ:
 
     print("\n✅ Hoàn tất!")
     print("\nBước tiếp theo:")
-    print("  python scripts/train_model.py    # Retrain model")
-    print("  python scripts/evaluate.py       # Đánh giá lại")
-    print("  python scripts/visualize.py      # Tạo biểu đồ mới")
+    print("  python scripts/train_model.py             # Retrain model")
+    print("  python scripts/export_dashboard_snapshot.py  # Cập nhật dashboard (React)")
+    print("  python scripts/evaluate.py                # Đánh giá lại")
+    print("  python scripts/visualize.py               # Tạo biểu đồ mới")
 
 
 if __name__ == "__main__":

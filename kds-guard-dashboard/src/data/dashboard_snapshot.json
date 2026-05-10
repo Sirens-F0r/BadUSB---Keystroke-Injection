@@ -1,0 +1,367 @@
+{
+  "generated_at": "2026-05-10T13:29:09.020982+07:00",
+  "systemOverview": {
+    "metrics": [
+      {
+        "id": 1,
+        "icon": "mdi:shield-check",
+        "value": "AN TOÀN",
+        "label": "Trạng thái hệ thống",
+        "description": "Theo dataset offline đã merge",
+        "color": "success.main"
+      },
+      {
+        "id": 2,
+        "icon": "mdi:account-group",
+        "value": "49",
+        "label": "Người dùng (Rust Collector)",
+        "description": "771 cửa sổ từ file thu thập (data/raw/rust)",
+        "color": "info.main"
+      },
+      {
+        "id": 3,
+        "icon": "mdi:shield-off-outline",
+        "value": "232",
+        "label": "Mẫu injection (tổng hợp)",
+        "description": "Mô phỏng BadUSB trong pipeline offline",
+        "color": "error.main"
+      },
+      {
+        "id": 4,
+        "icon": "mdi:database-check",
+        "value": "21,963",
+        "label": "Tổng mẫu trong features_dataset",
+        "description": "21,731 human + 232 injection",
+        "color": "info.main"
+      }
+    ],
+    "currentRiskScore": 0.02,
+    "lastUpdated": "2026-05-10T13:29:09",
+    "threatLevel": "LOW",
+    "threatDescription": "Không có mối đe dọa tích cực từ snapshot offline — giám sát realtime khi chạy kds_guard + bridge."
+  },
+  "keystrokeMetrics": {
+    "Người dùng thật (TB Rust)": [
+      273.6890171438582,
+      107.33393826286581,
+      4.4912399032249555,
+      102.6082125401626,
+      1.530479896238651,
+      3.586251621271076,
+      37.76392678187824
+    ],
+    "trần_minh_thắng": [
+      474.1656891407876,
+      132.5571415616245,
+      1.755475290303578,
+      116.68639582091387,
+      0.35,
+      13.875000000000002,
+      40.05037231445313
+    ],
+    "phạm_duy_khánh": [
+      453.3946433684921,
+      100.84765415297912,
+      2.3430558666901815,
+      102.63780878356556,
+      0.41025641025641024,
+      23.076923076923077,
+      21.927740635016026
+    ],
+    "trần_bảo": [
+      306.3444982269619,
+      112.8067792468504,
+      3.378081062533437,
+      95.68030521179601,
+      0.35294117647058826,
+      14.191176470588232,
+      22.468315573299634
+    ],
+    "quang": [
+      268.6228085140928,
+      97.76805606280905,
+      3.911942297896691,
+      96.80192840855601,
+      0.3125,
+      2.96875,
+      30.645973205566406
+    ],
+    "thuy_an": [
+      169.85920493623135,
+      143.60657038789478,
+      6.190047477041349,
+      79.40825135620086,
+      4.133333333333334,
+      0.0,
+      34.379939778645834
+    ],
+    "thùy_dương": [
+      113.36915184985632,
+      95.84666653891009,
+      9.497730663949891,
+      123.91888810997594,
+      6.793103448275862,
+      1.6379310344827587,
+      81.53207502693965
+    ],
+    "thiên_ngân": [
+      206.70599923920923,
+      137.489702481586,
+      5.019829812849506,
+      104.78127189862589,
+      3.3793103448275863,
+      0.0,
+      50.28896358095366
+    ],
+    "nhất_duy": [
+      166.31611842231985,
+      74.90355655492361,
+      6.301150627704842,
+      86.46868101180975,
+      1.1153846153846154,
+      3.173076923076924,
+      31.2766841008113
+    ],
+    "BadUSB Injection (lab)": [
+      32.2840671676882,
+      11.091238526653846,
+      35.59103064109615,
+      7.758841962533686,
+      30.771551724137932,
+      0.0,
+      2.187002885544578
+    ]
+  },
+  "activityTimeline": {
+    "values": [
+      34,
+      0,
+      0,
+      0,
+      18,
+      0,
+      0,
+      0,
+      0,
+      228,
+      0,
+      140,
+      102,
+      27,
+      0,
+      56,
+      0,
+      59,
+      0,
+      0,
+      22,
+      0,
+      0,
+      85
+    ],
+    "labels": [
+      "00:00",
+      "01:00",
+      "02:00",
+      "03:00",
+      "04:00",
+      "05:00",
+      "06:00",
+      "07:00",
+      "08:00",
+      "09:00",
+      "10:00",
+      "11:00",
+      "12:00",
+      "13:00",
+      "14:00",
+      "15:00",
+      "16:00",
+      "17:00",
+      "18:00",
+      "19:00",
+      "20:00",
+      "21:00",
+      "22:00",
+      "23:00"
+    ]
+  },
+  "riskScore": {
+    "history": [
+      0.02,
+      0.02,
+      0.02,
+      0.02,
+      0.02,
+      0.02,
+      0.024736539400540866,
+      0.02,
+      0.02,
+      0.02,
+      0.02,
+      0.02,
+      0.02,
+      0.02,
+      0.85,
+      0.85,
+      0.85,
+      0.85,
+      0.85,
+      0.85
+    ],
+    "labels": [
+      "H1",
+      "H2",
+      "H3",
+      "H4",
+      "H5",
+      "H6",
+      "H7",
+      "H8",
+      "H9",
+      "H10",
+      "H11",
+      "H12",
+      "H13",
+      "H14",
+      "INJ1",
+      "INJ2",
+      "INJ3",
+      "INJ4",
+      "INJ5",
+      "INJ6"
+    ]
+  },
+  "recentAlerts": [
+    {
+      "id": 1,
+      "severity": "CRITICAL",
+      "title": "Phát hiện 232 mẫu injection trong dataset offline",
+      "description": "Trung bình lab: mean flight=32.3 ms, speed=35.6 keys/s, burst=30.8 phím.",
+      "timestamp": "2026-05-10 13:29",
+      "action": "Đánh giá rule + RF",
+      "source": "Dataset merge"
+    },
+    {
+      "id": 2,
+      "severity": "HIGH",
+      "title": "Tốc độ gõ injection TB: 35.6 keys/s",
+      "description": "So với người thật (Rust TB), injection thường có flight time thấp và speed cao.",
+      "timestamp": "2026-05-10 13:29",
+      "action": "Rule R3 / RF",
+      "source": "Feature stats"
+    },
+    {
+      "id": 3,
+      "severity": "MEDIUM",
+      "title": "49 người — 771 cửa sổ Rust",
+      "description": "Thống kê từ các file CSV trong data/raw/rust sau khi trích features.",
+      "timestamp": "2026-05-10 13:29",
+      "action": "Info",
+      "source": "integrate_datasets"
+    }
+  ],
+  "eventLogRows": [
+    {
+      "id": 1,
+      "timestamp": "2026-05-10 13:29:09",
+      "eventType": "INFO",
+      "source": "SnapshotExport",
+      "riskScore": 0.0,
+      "triggeredRules": "-",
+      "action": "Allow",
+      "details": "dashboard_snapshot.json generated — 21,963 samples, rust_windows=771"
+    },
+    {
+      "id": 2,
+      "timestamp": "2026-05-10 13:29:09",
+      "eventType": "INFO",
+      "source": "RustCollector",
+      "riskScore": 0.02,
+      "triggeredRules": "-",
+      "action": "Allow",
+      "details": "Rust TB: ft=273.7 ms, speed=4.5 keys/s — 49 users"
+    },
+    {
+      "id": 3,
+      "timestamp": "2026-05-10 13:29:09",
+      "eventType": "INFO",
+      "source": "Collector",
+      "riskScore": 0.05,
+      "triggeredRules": "-",
+      "action": "Allow",
+      "details": "trần_minh_thắng — 40 windows, ft=474.2 ms"
+    },
+    {
+      "id": 4,
+      "timestamp": "2026-05-10 13:29:09",
+      "eventType": "INFO",
+      "source": "Collector",
+      "riskScore": 0.05,
+      "triggeredRules": "-",
+      "action": "Allow",
+      "details": "phạm_duy_khánh — 39 windows, ft=453.4 ms"
+    },
+    {
+      "id": 5,
+      "timestamp": "2026-05-10 13:29:09",
+      "eventType": "INFO",
+      "source": "Collector",
+      "riskScore": 0.05,
+      "triggeredRules": "-",
+      "action": "Allow",
+      "details": "trần_bảo — 34 windows, ft=306.3 ms"
+    },
+    {
+      "id": 6,
+      "timestamp": "2026-05-10 13:29:09",
+      "eventType": "INFO",
+      "source": "Collector",
+      "riskScore": 0.05,
+      "triggeredRules": "-",
+      "action": "Allow",
+      "details": "quang — 32 windows, ft=268.6 ms"
+    },
+    {
+      "id": 7,
+      "timestamp": "2026-05-10 13:29:09",
+      "eventType": "INFO",
+      "source": "Collector",
+      "riskScore": 0.05,
+      "triggeredRules": "-",
+      "action": "Allow",
+      "details": "thuy_an — 30 windows, ft=169.9 ms"
+    },
+    {
+      "id": 8,
+      "timestamp": "2026-05-10 13:29:09",
+      "eventType": "INFO",
+      "source": "Collector",
+      "riskScore": 0.05,
+      "triggeredRules": "-",
+      "action": "Allow",
+      "details": "thùy_dương — 29 windows, ft=113.4 ms"
+    },
+    {
+      "id": 9,
+      "timestamp": "2026-05-10 13:29:09",
+      "eventType": "INFO",
+      "source": "Collector",
+      "riskScore": 0.05,
+      "triggeredRules": "-",
+      "action": "Allow",
+      "details": "thiên_ngân — 29 windows, ft=206.7 ms"
+    },
+    {
+      "id": 10,
+      "timestamp": "2026-05-10 13:29:09",
+      "eventType": "INFO",
+      "source": "Collector",
+      "riskScore": 0.05,
+      "triggeredRules": "-",
+      "action": "Allow",
+      "details": "nhất_duy — 26 windows, ft=166.3 ms"
+    }
+  ],
+  "gaugeValue": 5.0
+}

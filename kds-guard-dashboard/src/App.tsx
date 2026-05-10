@@ -14,6 +14,20 @@ const App = (): ReactElement => {
     }
   }, [latestDetection, notify]);
 
+  // Gửi detection update lên Electron main process (system tray + native notification)
+  useEffect(() => {
+    if (!latestDetection) return;
+
+    const riskLevel = latestDetection.risk_level;
+    if (riskLevel === 'High' || riskLevel === 'Critical') {
+      window.electronAPI?.sendDetectionUpdate({
+        riskLevel,
+        riskScore: latestDetection.risk_score,
+        reasons: latestDetection.reasons,
+      });
+    }
+  }, [latestDetection]);
+
   return <Outlet />;
 };
 

@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-04-19T19:43:08.522980",
+  "timestamp": "2026-05-10T13:28:57.339564",
   "dataset": "data\\features_dataset.csv",
-  "n_samples": 21173,
-  "n_human": 20941,
+  "n_samples": 21963,
+  "n_human": 21731,
   "n_injection": 232,
   "results": [
     {
@@ -19,7 +19,7 @@
       },
       "confusion_matrix": [
         [
-          20941,
+          21731,
           0
         ],
         [
@@ -30,16 +30,16 @@
     },
     {
       "method": "Isolation Forest",
-      "accuracy": 0.9104519907429273,
-      "precision": 0.10902255639097744,
+      "accuracy": 0.9603423940263169,
+      "precision": 0.21033544877606528,
       "recall": 1.0,
-      "f1_score": 0.19661016949152543,
-      "auc_roc": 0.9921126926389248,
-      "latency_ms": 0.013572878173891544,
+      "f1_score": 0.34756554307116105,
+      "auc_roc": 0.9892847338697777,
+      "latency_ms": 0.011514380933135194,
       "confusion_matrix": [
         [
-          19045,
-          1896
+          20860,
+          871
         ],
         [
           0,
@@ -49,16 +49,16 @@
     },
     {
       "method": "One-Class SVM",
-      "accuracy": 0.8994474094365466,
-      "precision": 0.09826344769165608,
+      "accuracy": 0.9490051450166188,
+      "precision": 0.17159763313609466,
       "recall": 1.0,
-      "f1_score": 0.17894330890860008,
-      "auc_roc": 0.9972663344799593,
-      "latency_ms": 0.23695579503224737,
+      "f1_score": 0.29292929292929293,
+      "auc_roc": 0.9984205385917782,
+      "latency_ms": 0.09997491437500956,
       "confusion_matrix": [
         [
-          18812,
-          2129
+          20611,
+          1120
         ],
         [
           0,
@@ -73,10 +73,10 @@
       "recall": 1.0,
       "f1_score": 1.0,
       "auc_roc": 1.0,
-      "latency_ms": 0.005205031274110803,
+      "latency_ms": 0.0035131324462723884,
       "confusion_matrix": [
         [
-          20941,
+          21731,
           0
         ],
         [
@@ -95,7 +95,7 @@
       "best_threshold": 0.2,
       "confusion_matrix": [
         [
-          20941,
+          21731,
           0
         ],
         [

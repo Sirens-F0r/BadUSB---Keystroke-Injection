@@ -1,5 +1,5 @@
 import { lazy, Suspense, ReactElement, PropsWithChildren } from 'react';
-import { Outlet, RouteObject, RouterProps, createBrowserRouter } from 'react-router-dom';
+import { Outlet, RouteObject, createHashRouter } from 'react-router-dom';
 
 import PageLoader from 'components/loading/PageLoader';
 import Splash from 'components/loading/Splash';
@@ -59,10 +59,6 @@ const routes: RouteObject[] = [
   },
 ];
 
-const options: { basename: string } = {
-  basename: '/',
-};
-
-const router: Partial<RouterProps> = createBrowserRouter(routes, options);
+const router = createHashRouter(routes);
 
 export default router;

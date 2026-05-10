@@ -1,11 +1,18 @@
 # Huan luyen mo hinh ML phat hien BadUSB
-
 import os
 import sys
 import argparse
 import json
 from pathlib import Path
 from datetime import datetime
+
+# Fix Unicode output trên Windows CMD
+if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
 
 import pandas as pd
 import numpy as np

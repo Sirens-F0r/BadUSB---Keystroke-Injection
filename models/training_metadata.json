@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-19T19:42:59.449455",
+  "timestamp": "2026-05-10T13:28:43.625676",
   "feature_columns": [
     "mean_hold_time",
     "std_hold_time",
@@ -18,20 +18,20 @@
     "special_ratio",
     "max_burst_length"
   ],
-  "n_samples": 21173,
+  "n_samples": 21963,
   "has_labels": true,
   "results": [
     {
       "model_name": "Isolation Forest",
-      "accuracy": 0.9083825265643447,
-      "f1_score": 0.19166666666666668,
-      "auc_roc": 0.9918004712134264,
-      "precision_injection": 0.10599078341013825,
+      "accuracy": 0.9594809924880492,
+      "f1_score": 0.34074074074074073,
+      "auc_roc": 0.9864024164591272,
+      "precision_injection": 0.20535714285714285,
       "recall_injection": 1.0,
       "confusion_matrix": [
         [
-          3801,
-          388
+          4169,
+          178
         ],
         [
           0,
@@ -41,15 +41,15 @@
     },
     {
       "model_name": "One-Class SVM",
-      "accuracy": 0.8932703659976388,
-      "f1_score": 0.16911764705882354,
-      "auc_roc": 0.9971768711013317,
-      "precision_injection": 0.09236947791164658,
+      "accuracy": 0.943546551331664,
+      "f1_score": 0.27058823529411763,
+      "auc_roc": 0.9978145847711065,
+      "precision_injection": 0.1564625850340136,
       "recall_injection": 1.0,
       "confusion_matrix": [
         [
-          3737,
-          452
+          4099,
+          248
         ],
         [
           0,
@@ -66,7 +66,7 @@
       "recall_injection": 1.0,
       "confusion_matrix": [
         [
-          4189,
+          4347,
           0
         ],
         [
@@ -76,5 +76,5 @@
       ]
     }
   ],
-  "contamination": 0.1
+  "contamination": 0.05
 }

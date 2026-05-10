@@ -1,10 +1,11 @@
 // KDS Guard – Alerts Page
 // Trung tâm cảnh báo
 
-import { ReactElement } from 'react';
+import { ReactElement, useMemo } from 'react';
 import { Box, Chip, Paper, Stack, Typography } from '@mui/material';
 import IconifyIcon from 'components/base/IconifyIcon';
-import { recentAlertsData, AlertSeverity } from 'data/recent-alerts-data';
+import type { AlertSeverity } from 'data/recent-alerts-data';
+import { useDashboardSnapshot } from 'providers/DashboardSnapshotProvider.tsx';
 
 const severityConfig: Record<AlertSeverity, { color: 'error' | 'warning' | 'info' | 'success'; icon: string; bg: string }> = {
   CRITICAL: { color: 'error', icon: 'mdi:alert-octagon', bg: 'rgba(255, 0, 60, 0.08)' },
@@ -14,6 +15,16 @@ const severityConfig: Record<AlertSeverity, { color: 'error' | 'warning' | 'info
 };
 
 const AlertsPage = (): ReactElement => {
+  const { recentAlerts } = useDashboardSnapshot();
+
+  const severityCounts = useMemo(() => {
+    const c = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
+    recentAlerts.forEach((a) => {
+      c[a.severity] += 1;
+    });
+    return c;
+  }, [recentAlerts]);
+
   return (
     <>
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={6} flexWrap="wrap" gap={3}>
@@ -25,16 +36,16 @@ const AlertsPage = (): ReactElement => {
             All security alerts and notifications from KDS Guard monitoring system
           </Typography>
         </Box>
-        <Stack direction="row" gap={2}>
-          <Chip label="CRITICAL: 1" size="small" color="error" sx={{ fontWeight: 700 }} />
-          <Chip label="HIGH: 1" size="small" color="warning" sx={{ fontWeight: 700 }} />
-          <Chip label="MEDIUM: 1" size="small" color="info" sx={{ fontWeight: 700 }} />
-          <Chip label="LOW: 1" size="small" color="success" sx={{ fontWeight: 700 }} />
+        <Stack direction="row" gap={2} flexWrap="wrap">
+          <Chip label={`CRITICAL: ${severityCounts.CRITICAL}`} size="small" color="error" sx={{ fontWeight: 700 }} />
+          <Chip label={`HIGH: ${severityCounts.HIGH}`} size="small" color="warning" sx={{ fontWeight: 700 }} />
+          <Chip label={`MEDIUM: ${severityCounts.MEDIUM}`} size="small" color="info" sx={{ fontWeight: 700 }} />
+          <Chip label={`LOW: ${severityCounts.LOW}`} size="small" color="success" sx={{ fontWeight: 700 }} />
         </Stack>
       </Stack>
 
       <Stack gap={3}>
-        {recentAlertsData.map((alert) => {
+        {recentAlerts.map((alert) => {
           const config = severityConfig[alert.severity];
           return (
             <Paper key={alert.id} sx={{ p: 6, bgcolor: config.bg }}>

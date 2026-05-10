@@ -14,8 +14,22 @@
 
 // ===== CẤU HÌNH =====
 const API_BASE_URL = 'http://localhost:8080/api';
-const WS_URL = 'ws://localhost:8080/ws';
-const USE_MOCK = true; // Đổi thành false khi có backend thật
+/** Bridge Python: ws_bridge.py → ws://localhost:8765 */
+const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:8765';
+/** Chỉ true khi đặt VITE_USE_MOCK=true (demo không cần engine). Mặc định: WebSocket thật */
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
+
+function mapRustRiskLevel(s: string): RiskLevel {
+    const up = String(s).toUpperCase();
+    const map: Record<string, RiskLevel> = {
+        NORMAL: 'Normal',
+        LOW: 'Low',
+        MEDIUM: 'Medium',
+        HIGH: 'High',
+        CRITICAL: 'Critical',
+    };
+    return map[up] ?? 'Normal';
+}
 
 // ===== TYPESCRIPT INTERFACES (map với Rust structs) =====
 
@@ -243,12 +257,54 @@ export function connectRealtime(onMessage: MessageHandler): () => void {
         return () => clearInterval(interval);
     }
 
-    const ws = new WebSocket(WS_URL);
+    let ws: WebSocket;
+
+    try {
+        ws = new WebSocket(WS_URL);
+    } catch {
+        onMessage({ type: 'status_update', data: { is_running: false, mode: 'detection', uptime_seconds: 0, total_events: 0, total_windows_analyzed: 0, current_session_id: '', user_id: '' } });
+        return () => {};
+    }
+
+    ws.onopen = () => {
+        onMessage({
+            type: 'status_update',
+            data: {
+                is_running: true,
+                mode: 'detection',
+                uptime_seconds: 0,
+                total_events: 0,
+                total_windows_analyzed: 0,
+                current_session_id: '',
+                user_id: 'ws_bridge',
+            },
+        });
+    };
 
     ws.onmessage = (event) => {
         try {
-            const msg: RealtimeMessage = JSON.parse(event.data);
-            onMessage(msg);
+            const raw = JSON.parse(event.data) as Record<string, unknown>;
+            // Rust engine (main.rs): type "detection" + result { risk_level: "NORMAL", ... }
+            if (raw.type === 'detection' && raw.result && typeof raw.result === 'object') {
+                const r = raw.result as Record<string, unknown>;
+                const reasons = Array.isArray(r.reasons)
+                    ? (r.reasons as unknown[]).map(String)
+                    : [];
+                const mapped: RealtimeMessage = {
+                    type: 'detection_result',
+                    data: {
+                        risk_score: Number(r.risk_score ?? 0),
+                        risk_level: mapRustRiskLevel(String(r.risk_level ?? 'NORMAL')),
+                        rule_score: Number(r.rule_score ?? 0),
+                        reasons,
+                        window_start_ms: Number(raw.window_start_ms ?? 0),
+                        window_end_ms: Number(raw.window_end_ms ?? 0),
+                    },
+                };
+                onMessage(mapped);
+                return;
+            }
+            onMessage(raw as RealtimeMessage);
         } catch (e) {
             console.error('[KDS Guard WS] Parse error:', e);
         }
