@@ -1,19 +1,24 @@
 // KDS Guard – Activity Timeline Chart Section
 // Biểu đồ hoạt động gõ phím theo thời gian
 
-import { Box, Button, Paper, Stack, Typography } from '@mui/material';
+import { Box, Paper, Typography } from '@mui/material';
 import ActivityTimelineChart from './ActivityTimelineChart';
 import { ReactElement, useEffect, useRef } from 'react';
 import EChartsReactCore from 'echarts-for-react/lib/core';
-import { activityTimelineData } from 'data/chart-data/activity-timeline';
+import { useDashboardSnapshot } from 'providers/DashboardSnapshotProvider.tsx';
 
 const ActivityTimeline = (): ReactElement => {
+  const { activityTimeline } = useDashboardSnapshot();
   const chartRef = useRef<EChartsReactCore | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
       if (chartRef.current) {
-        chartRef.current.getEchartsInstance().resize();
+        try {
+          chartRef.current.getEchartsInstance().resize();
+        } catch {
+          // Chart instance not ready
+        }
       }
     };
     window.addEventListener('resize', handleResize);
@@ -23,53 +28,20 @@ const ActivityTimeline = (): ReactElement => {
   }, [chartRef]);
 
   return (
-    <Paper sx={{ p: { xs: 4, sm: 8 }, height: 1 }}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        flexWrap="wrap"
-        gap={2}
-        mb={6}
-      >
-        <Typography variant="h4" color="common.white">
+    <Paper sx={{ p: 3, borderRadius: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Typography variant="h5" color="text.primary" fontWeight={600}>
           Hoạt động gõ phím
         </Typography>
-        <Button
-          variant="text"
-          disableRipple
-          startIcon={
-            <Box
-              sx={{
-                width: 5,
-                height: 5,
-                bgcolor: 'primary.main',
-                borderRadius: 400,
-              }}
-            />
-          }
-          sx={{
-            justifyContent: 'flex-start',
-            px: 4,
-            py: 2,
-            borderRadius: 1,
-            alignItems: 'center',
-            fontSize: 'body2.fontSize',
-            gap: 1,
-            color: 'text.disabled',
-            bgcolor: 'background.default',
-            cursor: 'default',
-            '&:hover': { bgcolor: 'background.default' },
-            '& .MuiButton-startIcon': { mx: 0 },
-          }}
-        >
+        <Typography variant="caption" color="text.disabled">
           Sự kiện mỗi giờ
-        </Button>
-      </Stack>
+        </Typography>
+      </Box>
       <ActivityTimelineChart
         chartRef={chartRef}
-        data={activityTimelineData}
-        sx={{ height: '342px !important', flexGrow: 1 }}
+        data={activityTimeline.values}
+        labels={activityTimeline.labels}
+        sx={{ height: '280px !important', flexGrow: 1 }}
       />
     </Paper>
   );

@@ -9,18 +9,19 @@ import { CanvasRenderer } from 'echarts/renderers';
 import { TooltipComponent, GridComponent } from 'echarts/components';
 import EChartsReactCore from 'echarts-for-react/lib/core';
 import { MutableRefObject } from 'react';
-import { riskScoreLabels } from 'data/chart-data/risk-score';
-
 echarts.use([LineChart, CanvasRenderer, TooltipComponent, GridComponent]);
 
 interface RiskScoreChartProps {
   chartRef: MutableRefObject<EChartsReactCore | null>;
   data: number[];
+  labels?: string[];
   sx?: SxProps;
 }
 
-const RiskScoreChart = ({ chartRef, data, sx }: RiskScoreChartProps) => {
+const RiskScoreChart = ({ chartRef, data, labels, sx }: RiskScoreChartProps) => {
   const theme = useTheme();
+  const xLabels =
+    labels && labels.length === data.length ? labels : data.map((_, i) => `S${i + 1}`);
 
   const option = {
     tooltip: {
@@ -39,7 +40,7 @@ const RiskScoreChart = ({ chartRef, data, sx }: RiskScoreChartProps) => {
     },
     xAxis: {
       type: 'category',
-      data: riskScoreLabels,
+      data: xLabels,
       axisLine: { show: false },
       axisTick: { show: false },
       axisLabel: {

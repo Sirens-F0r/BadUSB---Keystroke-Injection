@@ -26,65 +26,75 @@ const severityColors: Record<string, 'error' | 'warning' | 'info' | 'success'> =
 
 const DetectionRules = (): ReactElement => {
   return (
-    <Paper sx={{ p: { xs: 4, sm: 8 }, height: 1 }}>
-      <Typography variant="h4" color="common.white" mb={6}>
-        Luật phát hiện
-      </Typography>
-      <TableContainer component={SimpleBar}>
+    <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
+      <Box sx={{ px: 4, py: 3, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          <Typography variant="h5" color="text.primary" fontWeight={600}>
+            Luật phát hiện
+          </Typography>
+          <Typography variant="caption" color="text.disabled">
+            {detectionRulesData.filter(r => r.triggered).length} / {detectionRulesData.length} luật đang trigger
+          </Typography>
+        </Box>
+        <Chip
+          label={`${detectionRulesData.filter(r => r.triggered).length} TRIGGERED`}
+          size="small"
+          color="error"
+          sx={{ fontWeight: 700, fontSize: '0.65rem' }}
+        />
+      </Box>
+      <TableContainer component={SimpleBar} sx={{ maxHeight: 340 }}>
         <Table sx={{ minWidth: 600 }}>
           <TableHead>
             <TableRow>
-              <TableCell align="left">ID</TableCell>
-              <TableCell align="left">Rule</TableCell>
-              <TableCell align="left">Threshold</TableCell>
-              <TableCell align="left">Current</TableCell>
-              <TableCell align="center">Status</TableCell>
-              <TableCell align="center">Confidence</TableCell>
+              <TableCell sx={{ bgcolor: 'background.default', color: 'text.disabled', fontWeight: 600, fontSize: '0.7rem', py: 1.5 }} align="left">ID</TableCell>
+              <TableCell sx={{ bgcolor: 'background.default', color: 'text.disabled', fontWeight: 600, fontSize: '0.7rem', py: 1.5 }} align="left">Rule</TableCell>
+              <TableCell sx={{ bgcolor: 'background.default', color: 'text.disabled', fontWeight: 600, fontSize: '0.7rem', py: 1.5 }} align="left">Threshold</TableCell>
+              <TableCell sx={{ bgcolor: 'background.default', color: 'text.disabled', fontWeight: 600, fontSize: '0.7rem', py: 1.5 }} align="left">Current</TableCell>
+              <TableCell sx={{ bgcolor: 'background.default', color: 'text.disabled', fontWeight: 600, fontSize: '0.7rem', py: 1.5 }} align="center">Status</TableCell>
+              <TableCell sx={{ bgcolor: 'background.default', color: 'text.disabled', fontWeight: 600, fontSize: '0.7rem', py: 1.5 }} align="center">Confidence</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {detectionRulesData.map((rule) => (
-              <TableRow key={rule.id}>
-                <TableCell>
-                  <Typography variant="body2" color="text.disabled">
+              <TableRow key={rule.id} sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                <TableCell sx={{ py: 1.5 }}>
+                  <Typography variant="body2" color="text.disabled" fontFamily="monospace" fontSize="0.7rem">
                     {rule.id}
                   </Typography>
                 </TableCell>
-                <TableCell>
-                  <Typography variant="body2" color="common.white" fontWeight={600}>
+                <TableCell sx={{ py: 1.5 }}>
+                  <Typography variant="body2" color="text.primary" fontWeight={500} fontSize="0.8rem">
                     {rule.name}
                   </Typography>
-                  <Typography variant="caption" color="text.disabled">
-                    {rule.description}
-                  </Typography>
                 </TableCell>
-                <TableCell>
-                  <Typography variant="body2" color="warning.main" fontFamily="monospace">
+                <TableCell sx={{ py: 1.5 }}>
+                  <Typography variant="body2" color="warning.main" fontFamily="monospace" fontSize="0.8rem">
                     {rule.threshold}
                   </Typography>
                 </TableCell>
-                <TableCell>
-                  <Typography variant="body2" color="common.white" fontFamily="monospace">
+                <TableCell sx={{ py: 1.5 }}>
+                  <Typography variant="body2" color="text.primary" fontFamily="monospace" fontSize="0.8rem">
                     {rule.currentValue}
                   </Typography>
                 </TableCell>
-                <TableCell align="center">
+                <TableCell align="center" sx={{ py: 1.5 }}>
                   <Chip
                     label={rule.triggered ? 'TRIGGERED' : 'NORMAL'}
                     size="small"
                     color={rule.triggered ? 'error' : 'success'}
-                    sx={{ fontWeight: 700, fontSize: '0.7rem' }}
+                    sx={{ fontWeight: 700, fontSize: '0.65rem', height: 20 }}
                   />
                 </TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <TableCell align="center" sx={{ py: 1.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 80 }}>
                     <LinearProgress
                       variant="determinate"
                       value={rule.confidence}
                       color={severityColors[rule.severity]}
-                      sx={{ flex: 1, height: 6, borderRadius: 3 }}
+                      sx={{ flex: 1, height: 4, borderRadius: 2 }}
                     />
-                    <Typography variant="caption" color="text.disabled">
+                    <Typography variant="caption" color="text.disabled" sx={{ minWidth: 32, textAlign: 'right' }}>
                       {rule.confidence}%
                     </Typography>
                   </Box>

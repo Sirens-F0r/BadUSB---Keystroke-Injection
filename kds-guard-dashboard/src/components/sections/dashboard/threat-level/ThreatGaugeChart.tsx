@@ -14,10 +14,12 @@ echarts.use([GaugeChart, CanvasRenderer, TooltipComponent]);
 
 interface ThreatGaugeChartProps {
   chartRef: MutableRefObject<EChartsReactCore | null>;
+  /** 0–100 */
+  value?: number;
   sx?: SxProps;
 }
 
-const ThreatGaugeChart = ({ chartRef, sx }: ThreatGaugeChartProps) => {
+const ThreatGaugeChart = ({ chartRef, value = 12, sx }: ThreatGaugeChartProps) => {
   const theme = useTheme();
 
   const option = {
@@ -59,7 +61,7 @@ const ThreatGaugeChart = ({ chartRef, sx }: ThreatGaugeChartProps) => {
         splitLine: { show: false },
         axisTick: { show: false },
         axisLabel: { show: false },
-        data: [{ value: 12 }],
+        data: [{ value }],
         detail: { show: false },
       },
     ],

@@ -15,13 +15,13 @@ const pipelineSteps = [
 const AboutPage = (): ReactElement => {
   return (
     <>
-      <Typography variant="h4" color="common.white" mb={1}>About KDS Guard</Typography>
+      <Typography variant="h4" color="text.primary" mb={1}>About KDS Guard</Typography>
       <Typography variant="body2" color="text.disabled" mb={6}>
         Keystroke Dynamics Security Guard – BadUSB Detection & Protection Tool
       </Typography>
 
       <Paper sx={{ p: 5, mb: 4 }}>
-        <Typography variant="h6" color="common.white" mb={3}>System Overview</Typography>
+        <Typography variant="h6" color="text.primary" mb={3}>System Overview</Typography>
         <Typography variant="body1" color="text.secondary" mb={2}>
           KDS Guard is a security monitoring tool that detects BadUSB attacks by analyzing keystroke dynamics.
           Unlike traditional USB security tools that rely on device whitelisting or driver signatures,
@@ -40,19 +40,19 @@ const AboutPage = (): ReactElement => {
       </Paper>
 
       <Paper sx={{ p: 5, mb: 4 }}>
-        <Typography variant="h6" color="common.white" mb={4}>System Architecture – Detection Pipeline</Typography>
+        <Typography variant="h6" color="text.primary" mb={4}>System Architecture – Detection Pipeline</Typography>
         <Stack gap={0}>
           {pipelineSteps.map((step, index) => (
             <Box key={step.name}>
               <Stack direction="row" alignItems="flex-start" gap={3}>
                 <Stack alignItems="center">
                   <Box sx={{ width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: step.color, flexShrink: 0 }}>
-                    <IconifyIcon icon={step.icon} width={24} height={24} color="common.white" />
+                    <IconifyIcon icon={step.icon} width={24} height={24} color="text.primary" />
                   </Box>
                   {index < pipelineSteps.length - 1 && <Box sx={{ width: 2, height: 40, bgcolor: 'divider' }} />}
                 </Stack>
                 <Box pt={1}>
-                  <Typography variant="body1" color="common.white" fontWeight={700} mb={0.5}>{step.name}</Typography>
+                  <Typography variant="body1" color="text.primary" fontWeight={700} mb={0.5}>{step.name}</Typography>
                   <Typography variant="body2" color="text.disabled">{step.description}</Typography>
                 </Box>
               </Stack>
@@ -62,7 +62,7 @@ const AboutPage = (): ReactElement => {
       </Paper>
 
       <Paper sx={{ p: 5, mb: 4 }}>
-        <Typography variant="h6" color="common.white" mb={3}>Detection Principle</Typography>
+        <Typography variant="h6" color="text.primary" mb={3}>Detection Principle</Typography>
         <Typography variant="body1" color="text.secondary" mb={2}>Human typing exhibits natural variability in timing patterns:</Typography>
         <Stack gap={1.5} ml={2} mb={3}>
           <Typography variant="body2" color="text.secondary">• <strong>Flight time</strong>: Time between releasing one key and pressing the next (typically 80–200ms)</Typography>
@@ -77,7 +77,7 @@ const AboutPage = (): ReactElement => {
       </Paper>
 
       <Paper sx={{ p: 5 }}>
-        <Typography variant="h6" color="common.white" mb={3}>Future Development</Typography>
+        <Typography variant="h6" color="text.primary" mb={3}>Future Development</Typography>
         <Stack gap={1.5}>
           <Typography variant="body2" color="text.secondary">• Machine Learning integration for adaptive threshold learning</Typography>
           <Typography variant="body2" color="text.secondary">• User profiling to personalize detection for individual typing patterns</Typography>

@@ -8,3 +8,31 @@ interface ImportMetaEnv {
   /** WebSocket URL (mặc định ws://localhost:8765) */
   readonly VITE_WS_URL?: string;
 }
+
+interface ElectronAPI {
+  sendDetectionUpdate(data: {
+    riskLevel: string;
+    riskScore: number;
+    reasons: string[];
+  }): void;
+  getAppPath(): Promise<string>;
+  getUsbDevices(): Promise<unknown>;
+  blockUsbDevice(instanceId: string): Promise<{ success: boolean; message: string }>;
+  unblockUsbDevice(instanceId: string): Promise<{ success: boolean; message: string }>;
+  onAlert(
+    callback: (data: {
+      riskLevel: string;
+      riskScore: number;
+      reasons: string[];
+    }) => void,
+  ): void;
+  platform: string;
+}
+
+declare global {
+  interface Window {
+    electronAPI?: ElectronAPI;
+  }
+}
+
+export {};

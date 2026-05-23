@@ -44,6 +44,13 @@ const userMenuItems: UserMenuItem[] = [
     path: '/about',
     color: 'text.primary',
   },
+  {
+    id: 6,
+    title: 'User Profile',
+    icon: 'mdi:account-circle-outline',
+    path: '/profile',
+    color: 'primary.main',
+  },
 ];
 
 export default userMenuItems;

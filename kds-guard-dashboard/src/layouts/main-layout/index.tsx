@@ -51,15 +51,15 @@ const MainLayout = ({ children }: PropsWithChildren): ReactElement => {
           sx={{
             width: 1,
             flexGrow: 1,
-            pt: 5,
+            pt: 3,
             pr: { xs: 3, sm: 5.175 },
-            pb: 6.25,
+            pb: 4,
             pl: { xs: 3, sm: 5.25 },
           }}
         >
           <Toolbar
             sx={{
-              height: 96,
+              height: 64,
             }}
           />
           {children}

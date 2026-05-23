@@ -16,53 +16,38 @@ import EventLog from 'components/sections/dashboard/event-log/EventLog';
 const Dashboard = (): ReactElement => {
   return (
     <>
+      <SystemOverview />
       <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap={3.5}>
-        {/* Row 1: System Overview Cards (full width) */}
-        <Box gridColumn={{ xs: 'span 12', '2xl': 'span 8' }} order={{ xs: 0 }}>
-          <SystemOverview />
-        </Box>
-
-        {/* Row 1 Right: Risk Score */}
-        <Box gridColumn={{ xs: 'span 12', lg: 'span 4' }} order={{ xs: 1, '2xl': 1 }}>
+        {/* Row 1: Risk Score + Threat Level */}
+        <Box gridColumn={{ xs: 'span 12', md: 'span 6' }} order={{ xs: 0 }}>
           <RiskScore />
+        </Box>
+        <Box gridColumn={{ xs: 'span 12', md: 'span 6' }} order={{ xs: 1 }}>
+          <ThreatLevel />
         </Box>
 
         {/* Row 2: Detection Rules Table */}
-        <Box gridColumn={{ xs: 'span 12', lg: 'span 8' }} order={{ xs: 2, '2xl': 2 }}>
+        <Box gridColumn={{ xs: 'span 12', lg: 'span 8' }} order={{ xs: 2 }}>
           <DetectionRules />
         </Box>
 
         {/* Row 2 Right: Keystroke Metrics Comparison */}
-        <Box
-          gridColumn={{ xs: 'span 12', md: 'span 6', xl: 'span 4' }}
-          order={{ xs: 3, xl: 3, '2xl': 3 }}
-        >
+        <Box gridColumn={{ xs: 'span 12', lg: 'span 4' }} order={{ xs: 3 }}>
           <KeystrokeMetrics />
         </Box>
 
-        {/* Row 3 Left: Threat Level Gauge */}
-        <Box
-          gridColumn={{ xs: 'span 12', md: 'span 6', xl: 'span 4' }}
-          order={{ xs: 4, xl: 5, '2xl': 4 }}
-        >
-          <ThreatLevel />
-        </Box>
-
         {/* Row 3: Activity Timeline */}
-        <Box gridColumn={{ xs: 'span 12', xl: 'span 8' }} order={{ xs: 5, xl: 4, '2xl': 5 }}>
+        <Box gridColumn={{ xs: 'span 12', xl: 'span 8' }} order={{ xs: 4 }}>
           <ActivityTimeline />
         </Box>
 
-        {/* Row 4: Recent Alerts */}
-        <Box
-          gridColumn={{ xs: 'span 12', xl: 'span 8', '2xl': 'span 6' }}
-          order={{ xs: 6, '2xl': 6 }}
-        >
+        {/* Row 3 Right: Recent Alerts */}
+        <Box gridColumn={{ xs: 'span 12', xl: 'span 4' }} order={{ xs: 5 }}>
           <RecentAlerts />
         </Box>
 
         {/* Row 4: Event Log Table */}
-        <Box gridColumn={{ xs: 'span 12', '2xl': 'span 6' }} order={{ xs: 7 }}>
+        <Box gridColumn={{ xs: 'span 12' }} order={{ xs: 6 }}>
           <EventLog />
         </Box>
       </Box>

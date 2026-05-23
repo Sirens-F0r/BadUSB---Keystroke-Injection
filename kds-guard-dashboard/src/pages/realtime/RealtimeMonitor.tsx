@@ -4,30 +4,18 @@
 import { ReactElement, useMemo } from 'react';
 import { Alert, Box, Chip, LinearProgress, Paper, Stack, Typography } from '@mui/material';
 import { useRealtime } from 'hooks/useRealtime';
-import {
-  riskLevelColor,
-  riskLevelEmoji,
-  type RiskLevel,
-} from 'services/kds-guard-api';
+import { riskLevelHex, riskLevelEmoji, type RiskLevel } from 'services/kds-guard-api';
 
 function riskLevelLabel(level: RiskLevel): string {
   const map: Record<RiskLevel, string> = {
-    Normal: 'NORMAL',
-    Low: 'LOW',
-    Medium: 'MEDIUM',
-    High: 'HIGH',
-    Critical: 'CRITICAL',
+    Normal: 'NORMAL', Low: 'LOW', Medium: 'MEDIUM', High: 'HIGH', Critical: 'CRITICAL',
   };
   return map[level] ?? level;
 }
 
-function riskChipColor(level: RiskLevel): 'success' | 'info' | 'warning' | 'error' | 'error' {
+function riskChipColor(level: RiskLevel): 'success' | 'info' | 'warning' | 'error' {
   const map: Record<RiskLevel, 'success' | 'info' | 'warning' | 'error'> = {
-    Normal: 'success',
-    Low: 'info',
-    Medium: 'warning',
-    High: 'error',
-    Critical: 'error',
+    Normal: 'success', Low: 'info', Medium: 'warning', High: 'error', Critical: 'error',
   };
   return map[level];
 }
@@ -36,19 +24,24 @@ interface MetricCardProps {
   label: string;
   value: string | number;
   unit: string;
-  icon: string;
   severity: 'normal' | 'warning' | 'danger';
 }
 
-function MetricCard({ label, value, unit, severity: _severity }: MetricCardProps) {
+const severityColor = { normal: 'text.secondary', warning: 'warning.main', danger: 'error.main' } as const;
+const severityBg = {
+  normal: 'background.default',
+  warning: 'rgba(251, 154, 35, 0.06)',
+  danger: 'rgba(255, 63, 86, 0.06)',
+} as const;
+
+function MetricCard({ label, value, unit, severity }: MetricCardProps) {
   return (
-    <Paper sx={{ p: 4, height: 1 }}>
-      <Typography variant="body2" color="text.disabled" mb={1}>{label}</Typography>
-      <Typography variant="h5" color="common.white" fontFamily="monospace">
-        {value}
-        <Typography component="span" variant="body2" color="text.disabled" ml={0.5}>{unit}</Typography>
+    <Box sx={{ p: 2.5, borderRadius: 2, bgcolor: severityBg[severity], border: '1px solid', borderColor: severity === 'normal' ? 'divider' : `${severity === 'warning' ? 'warning' : 'error'}.main`, height: 1 }}>
+      <Typography variant="caption" color="text.disabled" display="block" mb={1}>{label}</Typography>
+      <Typography variant="h6" color={severityColor[severity]} fontFamily="monospace" fontWeight={700}>
+        {value}<Typography component="span" variant="caption" color="text.disabled" ml={0.5}>{unit}</Typography>
       </Typography>
-    </Paper>
+    </Box>
   );
 }
 
@@ -70,20 +63,27 @@ const thresholds = {
   std_flight_time:  { warn: 30, danger: 10 },
 } as const;
 
-function getFeatureMetrics(f: ReturnType<typeof Object.assign> | null) {
+interface FeatureMetric {
+  label: string;
+  value: string | number;
+  unit: string;
+  key: string;
+}
+
+function getFeatureMetrics(f: Record<string, unknown> | null): FeatureMetric[] | null {
   if (!f) return null;
   return [
-    { label: 'Flight Time TB', value: (f as any).mean_flight_time?.toFixed(1) ?? '—', unit: 'ms', key: 'mean_flight_time' },
-    { label: 'CV (Hệ số biến thiên)', value: (f as any).cv_flight_time?.toFixed(3) ?? '—', unit: '', key: 'cv_flight_time' },
-    { label: 'Tốc độ gõ', value: (f as any).typing_speed?.toFixed(1) ?? '—', unit: 'phím/s', key: 'typing_speed' },
-    { label: 'Hold Time TB', value: (f as any).mean_hold_time?.toFixed(1) ?? '—', unit: 'ms', key: 'mean_hold_time' },
-    { label: 'IQR Hold Time', value: (f as any).iqr_hold_time?.toFixed(1) ?? '—', unit: 'ms', key: 'iqr_hold_time' },
-    { label: 'Burst tối đa', value: (f as any).max_burst_length ?? 0, unit: 'phím', key: 'max_burst_length' },
-    { label: 'Tỷ lệ Modifier', value: ((f as any).modifier_ratio ?? 0) * 100, unit: '%', key: 'modifier_ratio' },
-    { label: 'Flight Time min', value: (f as any).min_flight_time?.toFixed(1) ?? '—', unit: 'ms', key: 'min_flight_time' },
-    { label: 'P5 Flight Time', value: (f as any).p5_flight_time?.toFixed(1) ?? '—', unit: 'ms', key: 'mean_flight_time' },
-    { label: 'P95 Flight Time', value: (f as any).p95_flight_time?.toFixed(1) ?? '—', unit: 'ms', key: 'mean_flight_time' },
-    { label: 'Std Flight Time', value: (f as any).std_flight_time?.toFixed(1) ?? '—', unit: 'ms', key: 'std_flight_time' },
+    { label: 'Flight Time TB', value: (f.mean_flight_time as number)?.toFixed(1) ?? '—', unit: 'ms', key: 'mean_flight_time' },
+    { label: 'CV Flight', value: (f.cv_flight_time as number)?.toFixed(3) ?? '—', unit: '', key: 'cv_flight_time' },
+    { label: 'Tốc độ gõ', value: (f.typing_speed as number)?.toFixed(1) ?? '—', unit: 'keys/s', key: 'typing_speed' },
+    { label: 'Hold Time TB', value: (f.mean_hold_time as number)?.toFixed(1) ?? '—', unit: 'ms', key: 'mean_hold_time' },
+    { label: 'IQR Hold Time', value: (f.iqr_hold_time as number)?.toFixed(1) ?? '—', unit: 'ms', key: 'iqr_hold_time' },
+    { label: 'Burst t??i ?', value: (f.max_burst_length as number) ?? 0, unit: 'keys', key: 'max_burst_length' },
+    { label: 'Modifier Ratio', value: (((f.modifier_ratio as number) ?? 0) * 100).toFixed(1), unit: '%', key: 'modifier_ratio' },
+    { label: 'Flight Time min', value: (f.min_flight_time as number)?.toFixed(1) ?? '—', unit: 'ms', key: 'min_flight_time' },
+    { label: 'P5 Flight Time', value: (f.p5_flight_time as number)?.toFixed(1) ?? '—', unit: 'ms', key: 'mean_flight_time' },
+    { label: 'P95 Flight Time', value: (f.p95_flight_time as number)?.toFixed(1) ?? '—', unit: 'ms', key: 'mean_flight_time' },
+    { label: 'Std Flight Time', value: (f.std_flight_time as number)?.toFixed(1) ?? '—', unit: 'ms', key: 'std_flight_time' },
   ];
 }
 
@@ -95,7 +95,7 @@ const RealtimeMonitor = (): ReactElement => {
     return Math.round(latestDetection.risk_score * 100);
   }, [latestDetection]);
 
-  const featureMetrics = useMemo(() => getFeatureMetrics(latestFeature), [latestFeature]);
+  const featureMetrics = useMemo(() => getFeatureMetrics(latestFeature as Record<string, unknown> | null), [latestFeature]);
 
   const ruleKeys = latestDetection?.reasons?.map((r) => {
     if (r.includes('Flight time')) return 'R1';
@@ -109,68 +109,59 @@ const RealtimeMonitor = (): ReactElement => {
     return null;
   }).filter(Boolean) ?? [];
 
+  const isLive = eventHistory.length > 0;
+
   return (
     <>
-      {/* Header + live indicator */}
-      <Stack direction="row" alignItems="center" gap={2} mb={4}>
-        <Typography variant="h4" color="common.white">Giám sát thời gian thực</Typography>
-        {eventHistory.length > 0 ? (
+      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={4} flexWrap="wrap" gap={2}>
+        <Stack direction="row" alignItems="center" gap={2}>
+          <Typography variant="h4" color="text.primary">Giám sát thời gian thực</Typography>
           <Chip
-            label="● LIVE"
+            label={isLive ? 'LIVE' : 'OFFLINE'}
             size="small"
-            color="success"
-            sx={{ fontWeight: 700, fontSize: '0.7rem', animation: 'pulse 2s infinite',
-              '@keyframes pulse': { '0%': { opacity: 1 }, '50%': { opacity: 0.5 }, '100%': { opacity: 1 } } }}
+            color={isLive ? 'success' : 'default'}
+            sx={{
+              fontWeight: 700,
+              fontSize: '0.65rem',
+              ...(isLive ? { animation: 'pulse 2s infinite', '@keyframes pulse': { '0%': { opacity: 1 }, '50%': { opacity: 0.5 }, '100%': { opacity: 1 } } } : {}),
+            }}
           />
-        ) : (
-          <Chip
-            label="● OFFLINE"
-            size="small"
-            color="default"
-            sx={{ fontWeight: 700, fontSize: '0.7rem' }}
-          />
-        )}
+        </Stack>
+        <Typography variant="caption" color="text.disabled">
+          {isLive ? `${eventHistory.length} sự kiện` : 'Chưa có dữ liệu'}
+        </Typography>
       </Stack>
 
-      {/* Connection status banner */}
-      {eventHistory.length === 0 && (
+      {!isLive && (
         <Alert severity="warning" sx={{ mb: 3 }}>
-          <strong>Chưa kết nối WebSocket.</strong> Hãy chạy <code>python ws_bridge.py</code> ở Terminal để bắt đầu giám sát realtime, hoặc chạy engine trực tiếp:
-          <br />
-          <code>.\kds_guard\target\release\kds_guard.exe --json-output -u test_user | python ws_bridge.py</code>
+          <strong>Chưa kết nối WebSocket.</strong> Chạy <code>python ws_bridge.py</code> để bắt đầu giám sát.
         </Alert>
       )}
 
-      {/* Detection Result Card */}
-      <Paper sx={{ p: 5, mb: 4 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={3}>
-          <Stack>
-            <Typography variant="body1" color="common.white" fontWeight={600}>
-              Kết quả phát hiện hiện tại
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={2}>
+          <Box>
+            <Typography variant="h5" color="text.primary" fontWeight={600} mb={0.5}>Kết quả phát hiện</Typography>
+            <Typography variant="caption" color="text.disabled">
+              {latestDetection ? `Phân tích lúc ${new Date().toLocaleTimeString('vi-VN')}` : 'Đang chờ dữ liệu từ engine...'}
             </Typography>
-            <Typography variant="body2" color="text.disabled">
-              {latestDetection
-                ? `Cửa sổ ${new Date(latestDetection.window_end_ms).toLocaleTimeString()}`
-                : 'Đang chờ dữ liệu từ engine...'}
-            </Typography>
-          </Stack>
-          <Stack direction="row" gap={2} flexWrap="wrap">
-            <Stack alignItems="center">
-              <Typography variant="h3" color="common.white" fontFamily="monospace">
+          </Box>
+          <Stack direction="row" gap={4}>
+            <Box textAlign="center">
+              <Typography variant="h3" color="text.primary" fontFamily="monospace" fontWeight={700}>
                 {latestDetection ? latestDetection.risk_score.toFixed(2) : '—'}
               </Typography>
               <Typography variant="caption" color="text.disabled">Điểm rủi ro</Typography>
-            </Stack>
-            <Stack alignItems="center">
-              <Typography variant="h3" color="common.white" fontFamily="monospace">
+            </Box>
+            <Box textAlign="center">
+              <Typography variant="h3" color={latestDetection ? riskChipColor(latestDetection.risk_level) + '.main' : 'common.white'} fontFamily="monospace" fontWeight={700}>
                 {riskPercent}%
               </Typography>
               <Typography variant="caption" color="text.disabled">Mức đe dọa</Typography>
-            </Stack>
+            </Box>
           </Stack>
         </Stack>
 
-        {/* Risk bar */}
         <Box mt={3}>
           <Stack direction="row" justifyContent="space-between" mb={1}>
             <Typography variant="caption" color="text.disabled">Mức rủi ro</Typography>
@@ -182,73 +173,68 @@ const RealtimeMonitor = (): ReactElement => {
             variant="determinate"
             value={riskPercent}
             color={latestDetection ? riskChipColor(latestDetection.risk_level) : 'success'}
-            sx={{ height: 10, borderRadius: 5 }}
+            sx={{ height: 8, borderRadius: 4 }}
           />
         </Box>
 
-        {/* Rules triggered */}
         {ruleKeys.length > 0 && (
-          <Stack direction="row" gap={1} mt={3} flexWrap="wrap">
-            <Typography variant="body2" color="text.disabled">Luật kích hoạt:</Typography>
+          <Stack direction="row" gap={1} mt={2} flexWrap="wrap">
+            <Typography variant="caption" color="text.disabled">Luật kích hoạt:</Typography>
             {ruleKeys.map((r) => (
-              <Chip key={r} label={r} size="small" color="error" variant="outlined" />
+              <Chip key={r} label={r} size="small" color="error" variant="outlined" sx={{ fontWeight: 700, fontSize: '0.65rem' }} />
             ))}
           </Stack>
         )}
 
-        {/* Reasons */}
         {latestDetection?.reasons && latestDetection.reasons.length > 0 && (
-          <Stack gap={1} mt={3}>
-            <Typography variant="body2" color="text.disabled">Chi tiết:</Typography>
+          <Stack gap={0.75} mt={2}>
             {latestDetection.reasons.map((reason, i) => (
               <Stack key={i} direction="row" alignItems="center" gap={1}>
-                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main' }} />
-                <Typography variant="body2" color="common.white">{reason}</Typography>
+                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', flexShrink: 0 }} />
+                <Typography variant="caption" color="text.primary">{reason}</Typography>
               </Stack>
             ))}
           </Stack>
         )}
 
         {(!latestDetection || latestDetection.reasons?.length === 0) && (
-          <Stack direction="row" alignItems="center" gap={1} mt={3}>
+          <Stack direction="row" alignItems="center" gap={1} mt={2}>
             <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
-            <Typography variant="body2" color="success.main">Hành vi gõ phím bình thường — không có bất thường</Typography>
+            <Typography variant="caption" color="success.main">Hành vi gõ phím bình thường — không có bất thường</Typography>
           </Stack>
         )}
       </Paper>
 
-      {/* Feature Vector Metrics */}
-      <Typography variant="h5" color="common.white" mb={3}>Đặc trưng gõ phím (Feature Vector)</Typography>
+      <Typography variant="h5" color="text.primary" mb={2}>Đặc trưng gõ phím</Typography>
       {featureMetrics ? (
-        <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap={3}>
+        <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap={2} mb={4}>
           {featureMetrics.map((m) => {
             const sev = featureSeverity(
               typeof m.value === 'number' ? m.value : parseFloat(String(m.value)) || 0,
               m.key as keyof typeof thresholds,
             );
             return (
-              <Box key={m.label} gridColumn={{ xs: 'span 12', sm: 'span 6', md: 'span 4', lg: 'span 3' }}>
-                <MetricCard {...m} icon="" severity={sev} />
+              <Box key={m.label} gridColumn={{ xs: 'span 6', sm: 'span 4', md: 'span 3' }}>
+                <MetricCard {...m} severity={sev} />
               </Box>
             );
           })}
         </Box>
       ) : (
-        <Alert severity="info">Đang chờ feature vector từ engine... (gõ phím để kích hoạt)</Alert>
+        <Alert severity="info" sx={{ mb: 4 }}>Đang chờ feature vector từ engine... (gõ phím để kích hoạt)</Alert>
       )}
 
-      {/* Event History */}
-      <Typography variant="h5" color="common.white" mt={5} mb={3}>Lịch sử sự kiện ({eventHistory.length})</Typography>
+      <Typography variant="h5" color="text.primary" mb={2}>Lịch sử sự kiện ({eventHistory.length})</Typography>
       {eventHistory.length === 0 ? (
         <Alert severity="info">Chưa có sự kiện nào. Gõ phím hoặc chạy simulator để xem realtime data.</Alert>
       ) : (
-        <Paper sx={{ overflow: 'hidden' }}>
+        <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
           <Box sx={{ overflowX: 'auto' }}>
             <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
-              <Box component="thead" sx={{ bgcolor: 'divider' }}>
+              <Box component="thead" sx={{ bgcolor: 'background.default' }}>
                 <Box component="tr">
                   {['Thời gian', 'Loại', 'Risk Score', 'Mức', 'Luật'].map((h) => (
-                    <Box component="th" key={h} sx={{ px: 2, py: 1.5, textAlign: 'left', fontSize: '0.75rem', color: 'text.disabled', fontWeight: 600 }}>
+                    <Box component="th" key={h} sx={{ px: 2, py: 1.5, textAlign: 'left', fontSize: '0.7rem', color: 'text.disabled', fontWeight: 600 }}>
                       {h}
                     </Box>
                   ))}
@@ -257,26 +243,26 @@ const RealtimeMonitor = (): ReactElement => {
               <Box component="tbody">
                 {eventHistory.slice(0, 20).map((msg, i) => {
                   const isDetection = msg.type === 'detection_result';
-                  const data = (msg as any).data;
-                  const label = isDetection ? riskLevelLabel(data?.risk_level ?? 'Normal') : msg.type;
-                  const color = isDetection ? riskLevelColor(data?.risk_level ?? 'Normal') : '#aaa';
+                  const data = msg.data as Record<string, unknown> | undefined;
+                  const label = isDetection ? riskLevelLabel((data?.risk_level as RiskLevel) ?? 'Normal') : msg.type;
+                  const color = isDetection ? riskLevelHex((data?.risk_level as RiskLevel) ?? 'Normal') : '#aaa';
                   return (
                     <Box component="tr" key={i} sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
-                      <Box component="td" sx={{ px: 2, py: 1, fontSize: '0.8rem', color: 'text.secondary', fontFamily: 'monospace' }}>
-                        {new Date().toLocaleTimeString()}
+                      <Box component="td" sx={{ px: 2, py: 1.5, fontSize: '0.78rem', color: 'text.secondary', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                        {new Date(msg.timestamp || Date.now()).toLocaleTimeString('vi-VN')}
                       </Box>
-                      <Box component="td" sx={{ px: 2, py: 1, fontSize: '0.8rem', color }}>
-                        {isDetection ? `${riskLevelEmoji(data?.risk_level)} ${label}` : msg.type}
+                      <Box component="td" sx={{ px: 2, py: 1.5, fontSize: '0.78rem', color, whiteSpace: 'nowrap' }}>
+                        {isDetection ? `${riskLevelEmoji((data?.risk_level as RiskLevel) ?? 'Normal')} ${label}` : msg.type}
                       </Box>
-                      <Box component="td" sx={{ px: 2, py: 1, fontSize: '0.8rem', color: 'common.white', fontFamily: 'monospace' }}>
-                        {isDetection ? (data?.risk_score ?? 0).toFixed(2) : '—'}
+                      <Box component="td" sx={{ px: 2, py: 1.5, fontSize: '0.78rem', color: 'common.white', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                        {isDetection ? ((data?.risk_score as number) ?? 0).toFixed(2) : '—'}
                       </Box>
-                      <Box component="td" sx={{ px: 2, py: 1, fontSize: '0.8rem', color }}>
+                      <Box component="td" sx={{ px: 2, py: 1.5, fontSize: '0.78rem', color, whiteSpace: 'nowrap' }}>
                         {isDetection ? label : '—'}
                       </Box>
-                      <Box component="td" sx={{ px: 2, py: 1, fontSize: '0.8rem', color: 'text.disabled' }}>
-                        {isDetection && data?.reasons?.length > 0
-                          ? data.reasons.map((r: string, ri: number) => {
+                      <Box component="td" sx={{ px: 2, py: 1.5, fontSize: '0.78rem', color: 'text.disabled' }}>
+                        {isDetection && (data?.reasons as string[])?.length > 0
+                          ? (data?.reasons as string[])?.map((r: string, ri: number) => {
                               const rk = ruleKeys[ri];
                               return rk ? `${rk}: ${r}` : r;
                             }).join(', ')

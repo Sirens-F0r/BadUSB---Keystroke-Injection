@@ -17,7 +17,7 @@ const Sidebar = ({ open }: { open: boolean }): ReactElement => {
       <Toolbar
         sx={{
           position: 'fixed',
-          height: 98,
+          height: 64,
           zIndex: 1,
           bgcolor: 'background.default',
           p: 0,
@@ -43,13 +43,13 @@ const Sidebar = ({ open }: { open: boolean }): ReactElement => {
           />
         </RouterLink>
       </Toolbar>
-      <SimpleBar style={{ maxHeight: '100vh' }}>
+      <SimpleBar style={{ maxHeight: 'calc(100vh - 64px)', width: '100%' }}>
         <List
           component="nav"
           sx={{
-            mt: 24.5,
+            mt: 4,
             py: 2.5,
-            height: 724,
+            height: 'calc(100vh - 64px)',
             justifyContent: 'space-between',
           }}
         >

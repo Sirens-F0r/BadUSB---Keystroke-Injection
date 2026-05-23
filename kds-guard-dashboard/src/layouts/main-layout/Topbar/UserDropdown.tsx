@@ -50,11 +50,11 @@ const UserDropdown = (): ReactElement => {
       >
         <Tooltip title="KDS Guard Admin" arrow placement="bottom">
           <Avatar sx={{ width: 44, height: 44, bgcolor: 'primary.main' }}>
-            <IconifyIcon icon="mdi:shield-account" color="common.white" />
+            <IconifyIcon icon="mdi:shield-account" color="text.primary" />
           </Avatar>
         </Tooltip>
         <IconifyIcon
-          color="common.white"
+          color="text.primary"
           icon="mingcute:down-fill"
           width={22.5}
           height={22.5}

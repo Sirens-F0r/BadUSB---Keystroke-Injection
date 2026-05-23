@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-10T13:29:09.020982+07:00",
+  "generated_at": "2026-05-10T15:05:18.228634+07:00",
   "systemOverview": {
     "metrics": [
       {
@@ -36,7 +36,7 @@
       }
     ],
     "currentRiskScore": 0.02,
-    "lastUpdated": "2026-05-10T13:29:09",
+    "lastUpdated": "2026-05-10T15:05:18",
     "threatLevel": "LOW",
     "threatDescription": "Không có mối đe dọa tích cực từ snapshot offline — giám sát realtime khi chạy kds_guard + bridge."
   },
@@ -237,8 +237,8 @@
       "id": 1,
       "severity": "CRITICAL",
       "title": "Phát hiện 232 mẫu injection trong dataset offline",
-      "description": "Trung bình lab: mean flight=32.3 ms, speed=35.6 keys/s, burst=30.8 phím.",
-      "timestamp": "2026-05-10 13:29",
+      "description": "Trung bình lab: mean flight=32.3 ms, speed=35.6 keys/s, burst=30.8 phím, pause_CV=0.08.",
+      "timestamp": "2026-05-10 15:05",
       "action": "Đánh giá rule + RF",
       "source": "Dataset merge"
     },
@@ -247,16 +247,25 @@
       "severity": "HIGH",
       "title": "Tốc độ gõ injection TB: 35.6 keys/s",
       "description": "So với người thật (Rust TB), injection thường có flight time thấp và speed cao.",
-      "timestamp": "2026-05-10 13:29",
+      "timestamp": "2026-05-10 15:05",
       "action": "Rule R3 / RF",
       "source": "Feature stats"
     },
     {
       "id": 3,
+      "severity": "HIGH",
+      "title": "R8 — Injection fingerprint: pause CV=0.08",
+      "description": "232 mẫu injection có khoảng nghỉ đều (CV_pause=0.08, pause_count=5). Pattern đặc trưng của BadUSB script.",
+      "timestamp": "2026-05-10 15:05",
+      "action": "Rule R8",
+      "source": "Feature stats"
+    },
+    {
+      "id": 4,
       "severity": "MEDIUM",
       "title": "49 người — 771 cửa sổ Rust",
       "description": "Thống kê từ các file CSV trong data/raw/rust sau khi trích features.",
-      "timestamp": "2026-05-10 13:29",
+      "timestamp": "2026-05-10 15:05",
       "action": "Info",
       "source": "integrate_datasets"
     }
@@ -264,7 +273,7 @@
   "eventLogRows": [
     {
       "id": 1,
-      "timestamp": "2026-05-10 13:29:09",
+      "timestamp": "2026-05-10 15:05:18",
       "eventType": "INFO",
       "source": "SnapshotExport",
       "riskScore": 0.0,
@@ -274,7 +283,7 @@
     },
     {
       "id": 2,
-      "timestamp": "2026-05-10 13:29:09",
+      "timestamp": "2026-05-10 15:05:18",
       "eventType": "INFO",
       "source": "RustCollector",
       "riskScore": 0.02,
@@ -284,7 +293,7 @@
     },
     {
       "id": 3,
-      "timestamp": "2026-05-10 13:29:09",
+      "timestamp": "2026-05-10 15:05:18",
       "eventType": "INFO",
       "source": "Collector",
       "riskScore": 0.05,
@@ -294,7 +303,7 @@
     },
     {
       "id": 4,
-      "timestamp": "2026-05-10 13:29:09",
+      "timestamp": "2026-05-10 15:05:18",
       "eventType": "INFO",
       "source": "Collector",
       "riskScore": 0.05,
@@ -304,7 +313,7 @@
     },
     {
       "id": 5,
-      "timestamp": "2026-05-10 13:29:09",
+      "timestamp": "2026-05-10 15:05:18",
       "eventType": "INFO",
       "source": "Collector",
       "riskScore": 0.05,
@@ -314,7 +323,7 @@
     },
     {
       "id": 6,
-      "timestamp": "2026-05-10 13:29:09",
+      "timestamp": "2026-05-10 15:05:18",
       "eventType": "INFO",
       "source": "Collector",
       "riskScore": 0.05,
@@ -324,7 +333,7 @@
     },
     {
       "id": 7,
-      "timestamp": "2026-05-10 13:29:09",
+      "timestamp": "2026-05-10 15:05:18",
       "eventType": "INFO",
       "source": "Collector",
       "riskScore": 0.05,
@@ -334,7 +343,7 @@
     },
     {
       "id": 8,
-      "timestamp": "2026-05-10 13:29:09",
+      "timestamp": "2026-05-10 15:05:18",
       "eventType": "INFO",
       "source": "Collector",
       "riskScore": 0.05,
@@ -344,7 +353,7 @@
     },
     {
       "id": 9,
-      "timestamp": "2026-05-10 13:29:09",
+      "timestamp": "2026-05-10 15:05:18",
       "eventType": "INFO",
       "source": "Collector",
       "riskScore": 0.05,
@@ -354,7 +363,7 @@
     },
     {
       "id": 10,
-      "timestamp": "2026-05-10 13:29:09",
+      "timestamp": "2026-05-10 15:05:18",
       "eventType": "INFO",
       "source": "Collector",
       "riskScore": 0.05,

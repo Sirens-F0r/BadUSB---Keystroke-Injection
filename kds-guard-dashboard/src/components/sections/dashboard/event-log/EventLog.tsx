@@ -1,7 +1,7 @@
 // KDS Guard – Event Log Section
 
 import { useState, ChangeEvent, useCallback, ReactElement } from 'react';
-import { Box, Paper, Stack, TextField, Typography, InputAdornment } from '@mui/material';
+import { Box, Paper, TextField, Typography, InputAdornment } from '@mui/material';
 import IconifyIcon from 'components/base/IconifyIcon';
 import EventLogTable from './EventLogTable';
 
@@ -13,32 +13,25 @@ const EventLog = (): ReactElement => {
   }, []);
 
   return (
-    <Paper sx={{ p: { xs: 4, sm: 8 }, height: 1 }}>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={5}
-        flexWrap="wrap"
-        gap={3}
-      >
-        <Typography variant="h4" color="common.white">
+    <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
+      <Box sx={{ px: 4, py: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Typography variant="h5" color="text.primary" fontWeight={600}>
           Nhật ký sự kiện
         </Typography>
         <TextField
           variant="filled"
-          placeholder="Search events..."
+          placeholder="Search..."
           value={search}
           onChange={handleChange}
           sx={{
             '.MuiFilledInput-root': {
-              bgcolor: 'grey.A100',
-              ':hover': { bgcolor: 'background.default' },
-              ':focus': { bgcolor: 'background.default' },
-              ':focus-within': { bgcolor: 'background.default' },
+              bgcolor: 'background.default',
+              borderRadius: 1.5,
+              '&:hover': { bgcolor: 'action.hover' },
+              '&:focus-within': { bgcolor: 'background.default' },
             },
-            borderRadius: 2,
-            height: 40,
+            height: 36,
+            minWidth: 180,
           }}
           InputProps={{
             startAdornment: (
@@ -48,8 +41,8 @@ const EventLog = (): ReactElement => {
             ),
           }}
         />
-      </Stack>
-      <Box width={1} flexGrow={1} minHeight={325}>
+      </Box>
+      <Box width={1}>
         <EventLogTable searchText={search} />
       </Box>
     </Paper>

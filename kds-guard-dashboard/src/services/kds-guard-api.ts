@@ -1,8 +1,8 @@
-/**
+﻿/**
  * KDS Guard API Service Layer
  *
- * Lớp trung gian kết nối Dashboard ↔ Backend.
- * Hiện tại: dùng dữ liệu thật từ dataset (21,173 samples, 5 người dùng)
+ * Lớp trung gian kết nối Dashboard với Backend.
+ * Hiện tại: đang dùng dữ liệu thật từ dataset (21,173 samples, 5 người dùng)
  * Khi có backend thật: thay useMock = false, cấu hình API_BASE_URL
  *
  * Data structures map 1:1 với Rust engine:
@@ -14,7 +14,7 @@
 
 // ===== CẤU HÌNH =====
 const API_BASE_URL = 'http://localhost:8080/api';
-/** Bridge Python: ws_bridge.py → ws://localhost:8765 */
+/** Bridge Python: ws_bridge.py và ws://localhost:8765 */
 const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:8765';
 /** Chỉ true khi đặt VITE_USE_MOCK=true (demo không cần engine). Mặc định: WebSocket thật */
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
@@ -33,7 +33,7 @@ function mapRustRiskLevel(s: string): RiskLevel {
 
 // ===== TYPESCRIPT INTERFACES (map với Rust structs) =====
 
-/** Map: kds_guard/src/input_capture.rs → KeyEvent */
+/** Map: kds_guard/src/input_capture.rs và KeyEvent */
 export interface KeyEvent {
     timestamp_ms: number;
     key_code: string;
@@ -44,7 +44,7 @@ export interface KeyEvent {
     user_id: string;
 }
 
-/** Map: kds_guard/src/feature.rs → FeatureVector */
+/** Map: kds_guard/src/feature.rs và FeatureVector */
 export interface FeatureVector {
     window_start_ms: number;
     window_end_ms: number;
@@ -74,10 +74,10 @@ export interface FeatureVector {
     p95_flight_time: number;
 }
 
-/** Map: kds_guard/src/detector.rs → RiskLevel */
+/** Map: kds_guard/src/detector.rs và RiskLevel */
 export type RiskLevel = 'Normal' | 'Low' | 'Medium' | 'High' | 'Critical';
 
-/** Map: kds_guard/src/detector.rs → DetectionResult */
+/** Map: kds_guard/src/detector.rs và DetectionResult */
 export interface DetectionResult {
     risk_score: number;       // 0.0 - 1.0
     risk_level: RiskLevel;
@@ -87,7 +87,7 @@ export interface DetectionResult {
     window_end_ms: number;
 }
 
-/** Map: kds_guard/src/policy.rs → PolicyAction */
+/** Map: kds_guard/src/policy.rs và PolicyAction */
 export type PolicyAction =
     | { type: 'Allow' }
     | { type: 'LogOnly'; message: string }
@@ -95,7 +95,7 @@ export type PolicyAction =
     | { type: 'SoftBlock'; message: string; duration_ms: number }
     | { type: 'Challenge'; message: string; expected_input: string };
 
-/** Map: kds_guard/src/detector.rs → DetectorConfig */
+/** Map: kds_guard/src/detector.rs và DetectorConfig */
 export interface DetectorConfig {
     ft_mean_threshold_ms: number;
     ft_cv_threshold: number;
@@ -158,7 +158,7 @@ export async function fetchSystemStatus(): Promise<SystemStatus> {
  */
 export async function fetchDetectorConfig(): Promise<DetectorConfig> {
     if (USE_MOCK) {
-        // Thresholds tối ưu từ evaluation_report.json (19/04/2026)
+        // Thresholds từ đầu từ evaluation_report.json (19/04/2026)
         return {
             ft_mean_threshold_ms: 20.0,
             ft_cv_threshold: 0.15,
@@ -215,7 +215,7 @@ export async function fetchAlerts(limit = 50): Promise<AlertEntry[]> {
  */
 export async function fetchFeaturesDataset(): Promise<FeatureVector[]> {
     if (USE_MOCK) {
-        return [];  // Dashboard dùng chart-data thật từ dataset
+        return [];  // Dashboard đang chart-data thật từ dataset
     }
     const res = await fetch(`${API_BASE_URL}/features`);
     return res.json();
@@ -223,12 +223,55 @@ export async function fetchFeaturesDataset(): Promise<FeatureVector[]> {
 
 // ===== WEBSOCKET REALTIME =====
 
+export type ConfigUpdateMessage = {
+    type: 'config_update';
+    data: Partial<DetectorConfig>;
+};
+
+/**
+ * Gửi config update tới engine qua WebSocket
+ * Dùng cho: Settings page sliders và engine
+ */
+export function sendConfigUpdate(
+    config: Partial<DetectorConfig>,
+    onSend?: () => void,
+): void {
+    if (USE_MOCK) {
+        onSend?.();
+        return;
+    }
+    try {
+        const msg: ConfigUpdateMessage = { type: 'config_update', data: config };
+        const payload = JSON.stringify(msg);
+        // Gửi qua WebSocket hiện tại hoặc mở kết nối tạm
+        _wsSend(payload);
+        onSend?.();
+    } catch (e) {
+        console.error('[KDS Guard WS] sendConfigUpdate error:', e);
+    }
+}
+
+/** Gửi raw JSON string qua WebSocket */
+function _wsSend(payload: string): void {
+    const existing = (window as unknown as Record<string, WebSocket | undefined>)['__kds_ws'];
+    if (existing && existing.readyState === WebSocket.OPEN) {
+        existing.send(payload);
+        return;
+    }
+    // Mở kết nối tạm để gửi
+    const tmp = new WebSocket(WS_URL);
+    tmp.onopen = () => {
+        tmp.send(payload);
+        tmp.close();
+    };
+}
+
 export type RealtimeMessage =
-    | { type: 'key_event'; data: KeyEvent }
-    | { type: 'feature_vector'; data: FeatureVector }
-    | { type: 'detection_result'; data: DetectionResult }
-    | { type: 'policy_action'; data: PolicyAction }
-    | { type: 'status_update'; data: SystemStatus };
+    | { type: 'key_event'; data: KeyEvent; timestamp?: string }
+    | { type: 'feature_vector'; data: FeatureVector; timestamp?: string }
+    | { type: 'detection_result'; data: DetectionResult; timestamp?: string }
+    | { type: 'policy_action'; data: PolicyAction; timestamp?: string }
+    | { type: 'status_update'; data: SystemStatus; timestamp?: string };
 
 type MessageHandler = (msg: RealtimeMessage) => void;
 
@@ -250,6 +293,7 @@ export function connectRealtime(onMessage: MessageHandler): () => void {
                     window_start_ms: Date.now() - 5000,
                     window_end_ms: Date.now(),
                 },
+                timestamp: new Date().toISOString(),
             };
             onMessage(mockMsg);
         }, 2000);
@@ -260,70 +304,79 @@ export function connectRealtime(onMessage: MessageHandler): () => void {
     let ws: WebSocket;
 
     try {
-        ws = new WebSocket(WS_URL);
-    } catch {
-        onMessage({ type: 'status_update', data: { is_running: false, mode: 'detection', uptime_seconds: 0, total_events: 0, total_windows_analyzed: 0, current_session_id: '', user_id: '' } });
-        return () => {};
+    ws = new WebSocket(WS_URL);
+  } catch {
+    onMessage({ type: 'status_update', data: { is_running: false, mode: 'detection', uptime_seconds: 0, total_events: 0, total_windows_analyzed: 0, current_session_id: '', user_id: '' } });
+    return () => {};
+  }
+
+  ws.onopen = () => {
+    console.log('[KDS Guard WS] Connected to ws://localhost:8765');
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const raw = JSON.parse(event.data) as Record<string, unknown>;
+      // Rust engine (main.rs): type "detection" + result { risk_level: "NORMAL", ... }
+      if (raw.type === 'detection' && raw.result && typeof raw.result === 'object') {
+        const r = raw.result as Record<string, unknown>;
+        const reasons = Array.isArray(r.reasons)
+          ? (r.reasons as unknown[]).map(String)
+          : [];
+        const mapped: RealtimeMessage = {
+          type: 'detection_result',
+          data: {
+            risk_score: Number(r.risk_score ?? 0),
+            risk_level: mapRustRiskLevel(String(r.risk_level ?? 'NORMAL')),
+            rule_score: Number(r.rule_score ?? 0),
+            reasons,
+            window_start_ms: Number(raw.window_start_ms ?? 0),
+            window_end_ms: Number(raw.window_end_ms ?? 0),
+          },
+          timestamp: String(raw.timestamp ?? Date.now()),
+        };
+        onMessage(mapped);
+        return;
+      }
+      // Also handle type "detection_result" from ws_bridge broadcast
+      if (raw.type === 'detection_result' && raw.data && typeof raw.data === 'object') {
+        const d = raw.data as Record<string, unknown>;
+        const mapped: RealtimeMessage = {
+          type: 'detection_result',
+          data: {
+            risk_score: Number(d.risk_score ?? 0),
+            risk_level: mapRustRiskLevel(String(d.risk_level ?? 'NORMAL')),
+            rule_score: Number(d.rule_score ?? 0),
+            reasons: Array.isArray(d.reasons) ? (d.reasons as unknown[]).map(String) : [],
+            window_start_ms: Number(d.window_start_ms ?? 0),
+            window_end_ms: Number(d.window_end_ms ?? 0),
+          },
+          timestamp: String(raw.timestamp ?? Date.now()),
+        };
+        onMessage(mapped);
+        return;
+      }
+      const typedMsg = raw as Record<string, unknown>;
+      onMessage(typedMsg as RealtimeMessage);
+    } catch (e) {
+      console.error('[KDS Guard WS] Parse error:', e);
     }
+  };
 
-    ws.onopen = () => {
-        onMessage({
-            type: 'status_update',
-            data: {
-                is_running: true,
-                mode: 'detection',
-                uptime_seconds: 0,
-                total_events: 0,
-                total_windows_analyzed: 0,
-                current_session_id: '',
-                user_id: 'ws_bridge',
-            },
-        });
-    };
+  ws.onerror = (e) => {
+    console.error('[KDS Guard WS] Connection error:', e);
+  };
 
-    ws.onmessage = (event) => {
-        try {
-            const raw = JSON.parse(event.data) as Record<string, unknown>;
-            // Rust engine (main.rs): type "detection" + result { risk_level: "NORMAL", ... }
-            if (raw.type === 'detection' && raw.result && typeof raw.result === 'object') {
-                const r = raw.result as Record<string, unknown>;
-                const reasons = Array.isArray(r.reasons)
-                    ? (r.reasons as unknown[]).map(String)
-                    : [];
-                const mapped: RealtimeMessage = {
-                    type: 'detection_result',
-                    data: {
-                        risk_score: Number(r.risk_score ?? 0),
-                        risk_level: mapRustRiskLevel(String(r.risk_level ?? 'NORMAL')),
-                        rule_score: Number(r.rule_score ?? 0),
-                        reasons,
-                        window_start_ms: Number(raw.window_start_ms ?? 0),
-                        window_end_ms: Number(raw.window_end_ms ?? 0),
-                    },
-                };
-                onMessage(mapped);
-                return;
-            }
-            onMessage(raw as RealtimeMessage);
-        } catch (e) {
-            console.error('[KDS Guard WS] Parse error:', e);
-        }
-    };
-
-    ws.onerror = (e) => {
-        console.error('[KDS Guard WS] Connection error:', e);
-    };
-
-    ws.onclose = () => {
-        console.log('[KDS Guard WS] Disconnected');
-    };
+  ws.onclose = () => {
+    console.log('[KDS Guard WS] Disconnected');
+  };
 
     return () => ws.close();
 }
 
 // ===== UTILITIES =====
 
-/** Ánh xạ RiskLevel → màu hiển thị */
+/** Ánh xạ RiskLevel tới màu hiển thị */
 export function riskLevelColor(level: RiskLevel): string {
     const colors: Record<RiskLevel, string> = {
         Normal: '#4caf50',
@@ -335,14 +388,18 @@ export function riskLevelColor(level: RiskLevel): string {
     return colors[level];
 }
 
-/** Ánh xạ RiskLevel → emoji */
+export function riskLevelHex(level: RiskLevel): string {
+    return riskLevelColor(level);
+}
+
+/** Ánh xạ RiskLevel tới emoji */
 export function riskLevelEmoji(level: RiskLevel): string {
     const emojis: Record<RiskLevel, string> = {
-        Normal: '✅',
-        Low: '🔵',
-        Medium: '🟡',
-        High: '🟠',
-        Critical: '🔴',
+        Normal: '✓',
+        Low: '↑',
+        Medium: '↑↑',
+        High: '↑↑',
+        Critical: '!!!',
     };
     return emojis[level];
 }

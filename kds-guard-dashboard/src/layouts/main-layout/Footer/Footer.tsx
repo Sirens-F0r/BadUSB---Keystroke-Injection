@@ -1,34 +1,27 @@
 // KDS Guard – Footer
-
-import { Box, Stack, Typography } from '@mui/material';
-import { useBreakpoints } from 'providers/BreakpointsProvider';
+import { Box, Typography } from '@mui/material';
 import { ReactElement } from 'react';
 
 const Footer = ({ open }: { open: boolean }): ReactElement => {
-  const { down } = useBreakpoints();
-
-  const isMobileScreen = down('sm');
-
   return (
-    <Stack
+    <Box
       component="footer"
-      direction="row"
-      justifyContent={{ xs: 'center', sm: 'flex-end' }}
-      ml={isMobileScreen ? 0 : open ? 60 : 27.5}
-      pr={{ xs: 3, sm: 5.175 }}
-      pb={6.25}
-      pl={{ xs: 3, sm: 5.25 }}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        height: 40,
+        px: { xs: 3, sm: 5.175 },
+        bgcolor: 'background.default',
+        borderTop: '1px solid',
+        borderColor: 'divider',
+        ml: open ? 0 : 0,
+      }}
     >
-      <Typography variant="subtitle1" sx={{ textAlign: { xs: 'center', sm: 'right' } }}>
-        <Box component="span" sx={{ color: 'primary.main', fontWeight: 700 }}>
-          KDS Guard
-        </Box>{' '}
-        – Keystroke Dynamics Security Guard ·{' '}
-        <Box component="span" sx={{ color: 'text.disabled' }}>
-          Đồ án Cơ sở © 2026
-        </Box>
+      <Typography variant="caption" color="text.disabled">
+        KDS Guard · Keystroke Dynamics Security Guard · © 2026
       </Typography>
-    </Stack>
+    </Box>
   );
 };
 

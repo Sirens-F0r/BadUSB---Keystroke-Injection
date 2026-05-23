@@ -20,6 +20,7 @@ const LogsPage = lazy<() => ReactElement>(() => import('pages/logs/LogsPage'));
 const PoliciesPage = lazy<() => ReactElement>(() => import('pages/policies/PoliciesPage'));
 const SettingsPage = lazy<() => ReactElement>(() => import('pages/settings/SettingsPage'));
 const AboutPage = lazy<() => ReactElement>(() => import('pages/about/AboutPage'));
+const ProfilePage = lazy<() => ReactElement>(() => import('pages/profile/ProfilePage'));
 const ErrorPage = lazy<() => ReactElement>(() => import('pages/error/ErrorPage'));
 
 const routes: RouteObject[] = [
@@ -49,6 +50,7 @@ const routes: RouteObject[] = [
           { path: 'policies', element: <PoliciesPage /> },
           { path: 'settings', element: <SettingsPage /> },
           { path: 'about', element: <AboutPage /> },
+          { path: 'profile', element: <ProfilePage /> },
         ],
       },
     ],

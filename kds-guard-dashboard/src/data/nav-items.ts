@@ -70,6 +70,13 @@ const navItems: NavItem[] = [
     icon: 'mdi:information-outline',
     active: true,
   },
+  {
+    id: 10,
+    path: '/profile',
+    title: 'User Profile',
+    icon: 'mdi:account-circle-outline',
+    active: true,
+  },
 ];
 
 export default navItems;

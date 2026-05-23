@@ -1,27 +1,78 @@
 // KDS Guard – System Overview Cards
 
 import { ReactElement } from 'react';
-import { Box, Paper, Typography } from '@mui/material';
-import systemOverviewData from 'data/system-overview-data';
-import StatusCard from './StatusCard';
+import { Box, Stack, Typography } from '@mui/material';
+import IconifyIcon from 'components/base/IconifyIcon';
+import { useDashboardSnapshot } from 'providers/DashboardSnapshotProvider.tsx';
+import { SystemMetric } from 'data/system-overview-data';
+
+const StatusItem = ({ metric }: { metric: SystemMetric }): ReactElement => {
+  return (
+    <Stack direction="row" alignItems="center" gap={3} flex={1} minWidth={180}>
+      <Box
+        sx={{
+          width: 44,
+          height: 44,
+          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: `${metric.color}`,
+          flexShrink: 0,
+        }}
+      >
+        <IconifyIcon icon={metric.icon} width={22} height={22} color="text.primary" />
+      </Box>
+      <Box>
+        <Typography
+          variant="h4"
+          color="text.primary"
+          fontFamily="monospace"
+          fontWeight={700}
+          lineHeight={1}
+          mb={0.5}
+        >
+          {metric.value}
+        </Typography>
+        <Typography variant="caption" color="text.disabled" display="block">
+          {metric.label}
+        </Typography>
+      </Box>
+    </Stack>
+  );
+};
 
 const SystemOverview = (): ReactElement => {
+  const { systemOverview } = useDashboardSnapshot();
+
   return (
-    <Paper sx={{ p: { xs: 4, sm: 8 }, height: 1 }}>
-      <Typography variant="h4" color="common.white" mb={1.25}>
-        Tổng quan hệ thống
-      </Typography>
-      <Typography variant="subtitle2" color="text.disabled" mb={6}>
-        Tr\u1ea1ng th\u00e1i b\u1ea3o v\u1ec7 KDS Guard
-      </Typography>
-      <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap={{ xs: 4, sm: 6 }}>
-        {systemOverviewData.map((metric) => (
-          <Box key={metric.id} gridColumn={{ xs: 'span 12', sm: 'span 6', lg: 'span 3' }}>
-            <StatusCard metric={metric} />
-          </Box>
+    <Box mb={4}>
+      <Stack
+        direction="row"
+        alignItems="stretch"
+        gap={0}
+        divider={
+          <Box
+            sx={{
+              width: 1,
+              bgcolor: 'divider',
+              alignSelf: 'stretch',
+            }}
+          />
+        }
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+        }}
+      >
+        {systemOverview.metrics.map((metric) => (
+          <StatusItem key={metric.id} metric={metric} />
         ))}
-      </Box>
-    </Paper>
+      </Stack>
+    </Box>
   );
 };
 

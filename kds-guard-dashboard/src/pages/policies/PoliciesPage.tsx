@@ -50,13 +50,13 @@ const policyLevels: PolicyLevel[] = [
 const PoliciesPage = (): ReactElement => {
   return (
     <>
-      <Typography variant="h4" color="common.white" mb={1}>Response Policies</Typography>
+      <Typography variant="h4" color="text.primary" mb={1}>Response Policies</Typography>
       <Typography variant="body2" color="text.disabled" mb={6}>
         Define how KDS Guard responds when threats are detected. Policies are applied based on the composite risk score and number of triggered rules.
       </Typography>
 
       <Paper sx={{ p: 5, mb: 4 }}>
-        <Typography variant="h6" color="common.white" mb={3}>Current Active Policy</Typography>
+        <Typography variant="h6" color="text.primary" mb={3}>Current Active Policy</Typography>
         <Stack direction="row" gap={3} flexWrap="wrap">
           <Stack gap={1}>
             <Typography variant="caption" color="text.disabled">Active Level</Typography>
@@ -83,7 +83,7 @@ const PoliciesPage = (): ReactElement => {
             <Paper sx={{ p: 5, height: 1, borderLeft: '3px solid', borderColor: `${policy.color}.main`, opacity: policy.active ? 1 : 0.5 }}>
               <Stack direction="row" alignItems="center" gap={2} mb={3}>
                 <IconifyIcon icon={policy.icon} width={28} height={28} color={`${policy.color}.main`} />
-                <Typography variant="h6" color="common.white" flex={1}>{policy.name}</Typography>
+                <Typography variant="h6" color="text.primary" flex={1}>{policy.name}</Typography>
                 <Chip label={policy.active ? 'ENABLED' : 'DISABLED'} size="small" color={policy.active ? 'success' : 'default'} sx={{ fontWeight: 700, fontSize: '0.65rem' }} />
               </Stack>
               <Typography variant="body2" color="text.disabled" mb={3}>{policy.description}</Typography>

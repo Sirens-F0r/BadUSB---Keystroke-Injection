@@ -34,7 +34,7 @@ const StatusCard = ({ metric }: { metric: SystemMetric }): ReactElement => {
         />
       </Box>
       <Box>
-        <Typography variant="h4" color="common.white" mb={2}>
+        <Typography variant="h4" color="text.primary" mb={2}>
           {metric.value}
         </Typography>
         <Typography variant="body1" color="text.secondary" mb={1}>

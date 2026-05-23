@@ -31,13 +31,14 @@ export function useRealtime(enabled = true) {
     isConnected: false,
   });
 
-  const disconnectRef = useRef<(() => void) | null>(null);
+    const disconnectRef = useRef<(() => void) | null>(null);
 
   const handleMessage = useCallback((msg: RealtimeMessage) => {
     setState((prev) => {
       const history = [msg, ...prev.eventHistory].slice(0, MAX_HISTORY);
       return {
         ...prev,
+        connectionStatus: 'connected',
         eventHistory: history,
         latestDetection: msg.type === 'detection_result' ? msg.data : prev.latestDetection,
         latestFeature: msg.type === 'feature_vector' ? msg.data : prev.latestFeature,
@@ -63,8 +64,6 @@ export function useRealtime(enabled = true) {
 
     setState((prev) => ({ ...prev, connectionStatus: 'connecting' }));
     disconnectRef.current = connectRealtime(handleMessage);
-
-    setState((prev) => ({ ...prev, connectionStatus: 'connected', isConnected: true }));
 
     return () => {
       if (disconnectRef.current) {

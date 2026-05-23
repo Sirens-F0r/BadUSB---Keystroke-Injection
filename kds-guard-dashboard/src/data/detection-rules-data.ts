@@ -93,4 +93,15 @@ export const detectionRulesData: DetectionRule[] = [
     severity: 'high',
     weight: 0.1,
   },
+  {
+    id: 'R8',
+    name: 'Injection Fingerprint',
+    description: 'Pattern khoảng nghỉ đều giữa các burst: ≥ 3 pauses với CV pause < 0.3 — đặc trưng script chạy từng dòng',
+    threshold: 'pause ≥ 3 + CV_pause < 0.3',
+    currentValue: '0 khoảng nghỉ',
+    triggered: false,
+    confidence: 95,
+    severity: 'high',
+    weight: 0.25,
+  },
 ];

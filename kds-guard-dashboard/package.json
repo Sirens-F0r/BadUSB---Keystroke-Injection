@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "main": "dist-electron/main.mjs",
+  "main": "dist-electron/main.js",
   "description": "KDS Guard — BadUSB Detection via Keystroke Dynamics",
   "author": "KDS Guard Project 2026",
   "scripts": {
@@ -14,7 +14,8 @@
     "predeploy": "vite build && powershell -Command \"Copy-Item ./dist/index.html -Destination ./dist/404.html\"",
     "deploy": "gh-pages -d dist",
     "electron:dev": "vite",
-    "electron:build": "vite build && electron-builder --win --config electron-builder.json",
+    "electron:build": "vite build && electron-builder --win --config electron-builder.json --publish never",
+    "electron:build:dir": "vite build && electron-builder --win --dir --config electron-builder.json --publish never",
     "electron:preview": "vite preview"
   },
   "dependencies": {

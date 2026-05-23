@@ -44,3 +44,17 @@ desktop.ini
 
 # Logs
 *.log
+
+# Node.js
+node_modules/
+
+# Electron build artifacts
+kds-guard-dashboard/dist-electron/
+kds-guard-dashboard/release/
+
+# Temporary scripts
+kds-guard-dashboard/check_*.py
+kds-guard-dashboard/verify_*.py
+kds-guard-dashboard/test_*.ps1
+kds-guard-dashboard/launch_app.ps1
+kds-guard-dashboard/ws_bridge.py

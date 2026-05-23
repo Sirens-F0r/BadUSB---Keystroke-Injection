@@ -1,9 +1,10 @@
 // KDS Guard – Event Log DataGrid Table
 
 import { ReactElement, useMemo } from 'react';
-import { Chip } from '@mui/material';
+import { Box, Chip } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { eventLogRows } from 'data/event-log-data';
+import { eventLogRows as fallbackEventLogRows } from 'data/event-log-data';
+import { useDashboardSnapshot } from 'providers/DashboardSnapshotProvider.tsx';
 import CustomPagination from 'components/common/CustomPagination';
 import CustomNoResultsOverlay from 'components/common/CustomNoResultsOverlay';
 
@@ -54,9 +55,9 @@ const columns: GridColDef[] = [
       const val = params.value as number;
       const color = val > 0.7 ? 'error.main' : val > 0.4 ? 'warning.main' : 'success.main';
       return (
-        <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>
-          <span style={{ color: 'inherit' }}>{val.toFixed(2)}</span>
-        </span>
+        <Box component="span" sx={{ fontFamily: 'monospace', fontWeight: 700, color }}>
+          {val.toFixed(2)}
+        </Box>
       );
     },
   },
@@ -85,17 +86,20 @@ const columns: GridColDef[] = [
 ];
 
 const EventLogTable = ({ searchText }: { searchText: string }): ReactElement => {
+  const { eventLogRows } = useDashboardSnapshot();
+  const rows = eventLogRows?.length ? eventLogRows : fallbackEventLogRows;
+
   const filteredRows = useMemo(() => {
-    if (!searchText) return eventLogRows;
+    if (!searchText) return rows;
     const lowerSearch = searchText.toLowerCase();
-    return eventLogRows.filter(
+    return rows.filter(
       (row) =>
         row.details?.toString().toLowerCase().includes(lowerSearch) ||
         row.eventType?.toString().toLowerCase().includes(lowerSearch) ||
         row.source?.toString().toLowerCase().includes(lowerSearch) ||
         row.triggeredRules?.toString().toLowerCase().includes(lowerSearch),
     );
-  }, [searchText]);
+  }, [searchText, rows]);
 
   return (
     <DataGrid

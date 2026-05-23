@@ -16,11 +16,13 @@ echarts.use([BarChart, CanvasRenderer, TooltipComponent, GridComponent]);
 interface ActivityTimelineChartProps {
   chartRef: MutableRefObject<EChartsReactCore | null>;
   data: number[];
+  labels?: string[];
   sx?: SxProps;
 }
 
-const ActivityTimelineChart = ({ chartRef, data, sx }: ActivityTimelineChartProps) => {
+const ActivityTimelineChart = ({ chartRef, data, labels, sx }: ActivityTimelineChartProps) => {
   const theme = useTheme();
+  const xLabels = labels?.length === data.length ? labels : activityTimelineLabels;
 
   const option = {
     tooltip: {
@@ -37,7 +39,7 @@ const ActivityTimelineChart = ({ chartRef, data, sx }: ActivityTimelineChartProp
     },
     xAxis: {
       type: 'category',
-      data: activityTimelineLabels,
+      data: xLabels,
       axisLine: { show: false },
       axisTick: { show: false },
       axisLabel: {

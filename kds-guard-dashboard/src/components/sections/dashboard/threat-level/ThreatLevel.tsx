@@ -5,15 +5,20 @@ import { Box, Paper, Typography } from '@mui/material';
 import ThreatGaugeChart from './ThreatGaugeChart';
 import { ReactElement, useEffect, useRef } from 'react';
 import EChartsReactCore from 'echarts-for-react/lib/core';
+import { useDashboardSnapshot } from 'providers/DashboardSnapshotProvider.tsx';
 
 const ThreatLevel = (): ReactElement => {
+  const { systemOverview, gaugeValue } = useDashboardSnapshot();
   const chartRef = useRef<EChartsReactCore | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
       if (chartRef.current) {
-        const echartsInstance = chartRef.current.getEchartsInstance();
-        echartsInstance.resize({ width: 'auto', height: 'auto' });
+        try {
+          chartRef.current.getEchartsInstance().resize();
+        } catch {
+          // Chart instance not ready
+        }
       }
     };
     window.addEventListener('resize', handleResize);
@@ -23,40 +28,43 @@ const ThreatLevel = (): ReactElement => {
   }, [chartRef]);
 
   return (
-    <Paper sx={{ p: { xs: 4, sm: 8 }, height: 1 }}>
-      <Typography variant="h4" color="common.white" mb={2.5}>
-        Mức đe dọa
-      </Typography>
-      <Typography variant="body1" color="text.primary" mb={4.5}>
-        Đánh giá rủi ro hiện tại
-      </Typography>
-      <Typography
-        variant="h1"
-        color="success.main"
-        mb={4.5}
-        fontSize={{ xs: 'h2.fontSize', sm: 'h1.fontSize' }}
-      >
-        LOW
-      </Typography>
-      <Typography variant="body1" color="text.primary" mb={10}>
-        No active threats detected in the last 6 hours
-      </Typography>
+    <Paper sx={{ p: 3, borderRadius: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Box>
+          <Typography variant="h5" color="text.primary" fontWeight={600}>
+            Mức đe dọa
+          </Typography>
+          <Typography variant="caption" color="text.disabled">
+            {systemOverview.threatDescription}
+          </Typography>
+        </Box>
+        <Typography
+          variant="h3"
+          color="success.main"
+          fontFamily="monospace"
+          fontWeight={700}
+          sx={{ lineHeight: 1 }}
+        >
+          {systemOverview.threatLevel}
+        </Typography>
+      </Box>
       <Box
         flex={1}
         sx={{ position: 'relative' }}
       >
         <ThreatGaugeChart
           chartRef={chartRef}
+          value={gaugeValue}
           sx={{
             display: 'flex',
             justifyContent: 'center',
             flex: '1 1 0%',
-            maxHeight: 152,
+            maxHeight: 120,
           }}
         />
         <Typography
-          variant="h1"
-          color="common.white"
+          variant="h3"
+          color="text.primary"
           textAlign="center"
           mx="auto"
           position="absolute"
@@ -64,7 +72,7 @@ const ThreatLevel = (): ReactElement => {
           right={0}
           bottom={0}
         >
-          12%
+          {Math.round(gaugeValue)}%
         </Typography>
       </Box>
     </Paper>
