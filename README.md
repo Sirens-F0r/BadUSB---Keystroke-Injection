@@ -87,9 +87,9 @@ Khi mở ứng dụng (portable hoặc installer), hệ thống sẽ **tự đ�
    - Phân tích 22 đặc trưng keystroke theo thời gian thực
    - Đánh giá risk score qua 8 luật (R1-R8)
 
-2. **WebSocket Bridge** — `ws_bridge.py` (bundled bên trong app)
+2. **WebSocket Server** — tích hợp trực tiếp trong Electron (Node.js)
    - Kết nối engine với Dashboard
-   - Broadcast sự kiện phát hiện qua WebSocket
+   - Broadcast sự kiện phát hiện qua WebSocket `ws://localhost:8765`
    - Dashboard nhận dữ liệu realtime và cập nhật biểu đồ live
 
 3. **Dashboard** — Giao diện web trong cửa sổ Electron
@@ -97,7 +97,7 @@ Khi mở ứng dụng (portable hoặc installer), hệ thống sẽ **tự đ�
    - Biểu đồ ECharts cập nhật realtime
    - Thông báo Windows Notification khi phát hiện tấn công
 
-> **Yêu cầu:** `ws_bridge.py` cần **Python** được cài sẵn trên máy. Nếu chưa có, tải tại [python.org](https://www.python.org/downloads/) và chọn **Add Python to PATH** khi cài đặt.
+> **Không cần cài Python hay bất kỳ phần mềm nào khác** — mọi thứ đã được đóng gói sẵn trong `.exe`. Người dùng chỉ cần double-click là chạy.
 
 ### Tính năng chính
 
@@ -825,10 +825,36 @@ python scripts/integrate_datasets.py --rust-collect --merge
 | Bắt phím | rdev (cross-platform) + WinAPI BlockInput |
 | Desktop App | Electron 42 + TypeScript |
 | Dashboard | React 18 + TypeScript + MUI v5 + ECharts |
-| Real-time | WebSocket bridge (Python websockets) |
+| Real-time | WebSocket server (Node.js, tích hợp trong Electron) |
 | ML | scikit-learn (RF, IF, OCSVM) |
 | Visualization | ECharts |
 | Packaging | electron-builder |
+
+---
+
+## File chạy ứng dụng
+
+**KDS Guard.exe** — File chạy ứng dụng cho người dùng cuối:
+
+```
+C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO\kds-guard-dashboard\release\win-unpacked\KDS Guard.exe
+```
+
+| File | Kích thước | Mô tả |
+|------|-----------|--------|
+| `KDS Guard.exe` | 216 MB | File chạy chính (portable) — double-click để khởi động |
+| `kds_guard.exe` | 2 MB | Engine Rust (bundled trong thư mục `resources/`) |
+
+### Cách chạy
+
+1. Mở thư mục `win-unpacked`
+2. Double-click **`KDS Guard.exe`**
+3. Ứng dụng tự động khởi động:
+   - Engine Rust giám sát bàn phím
+   - WebSocket server kết nối Dashboard
+   - Dashboard hiển thị realtime
+
+> Không cần cài Python hay bất kỳ phần mềm bổ sung nào.
 
 ---
 

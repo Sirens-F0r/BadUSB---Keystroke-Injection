@@ -8,74 +8,64 @@ import {
     ipcMain,
 } from 'electron';
 import path from 'node:path';
-import fs from 'node:fs';
+import fsn from 'node:fs';
 import { spawn, execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { WebSocketServer, WebSocket } from 'ws';
 
 const _module = import.meta.url;
-const __filename = fileURLToPath(_module);
-const __dirname = path.dirname(__filename);
+const _filename = fileURLToPath(_module);
+const _dirname = path.dirname(_filename);
 
 const gotTheLock = app.requestSingleInstanceLock();
-if (!gotTheLock) {
-    app.quit();
-}
+if (!gotTheLock) app.quit();
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
-let wsBridgeProcess: ReturnType<typeof spawn> | null = null;
 let engineProcess: ReturnType<typeof spawn> | null = null;
+let wss: WebSocketServer | null = null;
 let isQuitting = false;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const PROJECT_ROOT = isDev
-    ? path.join(__dirname, '..', '..')
+    ? path.join(_dirname, '..', '..')
     : path.join(path.dirname(app.getPath('exe')), '..');
-const WS_BRIDGE_SCRIPT = path.join(PROJECT_ROOT, 'ws_bridge.py');
-const KDS_GUARD_EXE = path.join(PROJECT_ROOT, 'kds_guard.exe');
-const KDS_GUARD_EXE_DEBUG = path.join(PROJECT_ROOT, 'kds_guard_debug.exe');
 
-function getEnginePath(): string {
-    if (isDev) {
-        if (import.meta.env.VITE_KDS_ENGINE_PATH) return import.meta.env.VITE_KDS_ENGINE_PATH;
-        if (fs.existsSync(KDS_GUARD_EXE)) return KDS_GUARD_EXE;
-        if (fs.existsSync(KDS_GUARD_EXE_DEBUG)) return KDS_GUARD_EXE_DEBUG;
-        return KDS_GUARD_EXE;
-    }
-    const bundledPath = path.join(process.resourcesPath!, 'kds_guard.exe');
-    if (fs.existsSync(bundledPath)) return bundledPath;
-    return path.join(path.dirname(app.getPath('exe')), 'kds_guard.exe');
-}
+// Teal shield data URL — always works, no external files needed
+const SHIELD_ICON_URL =
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAA7AAAAOwBeShxvQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAGJSURBVFiF7ZY9TsNAEIW/sRsTF6iRGhSUCBU9FZegpOMSnIIjUNLRICGioqRGiQMU1Ak6JBwCGoSEhAQVCRJ2Zuc2JBGJ2NhsZ9b2eGd2PUL8E7bJFkkD0ALagCmgHxgEaoAm4AJYkLQqqQvYBDaAd+BS0qykLuCVrYukgO+StiS1AD3AXeBNUpekY+BJ0rqkFmDIdL+kc0mXwL2kZ0lrwBjwKekWeJe0BkwDj5IeJLUBY8CTpBXgTtKDpB3gUNKGpE1Jm5I2gS1gHrgE1iVtStoANoFN4FzSmqQzSWuSTiTtS1oHziTdkXQqaU3SgqQJSVOSpiQdSLqR9CLpVtKDpHNJd5KWJe1IOpV0LGlT0qakdUnrks4lPUk6lXQs6VTSqqRFSQuSJiWNSTqW9CTpVdKrpFNJJ5KOJR1JOpR0IOlI0p6kPUkHkk4kHUs6lLQjaVvSlqR1SSuSliVNSZqQdCTpRNKJpFNJp5KOJf0A1gAj3f9z8QAAAABJRU5ErkJggg==';
 
-function getTrayIcon(): nativeImage {
-    const iconPath = isDev
-        ? path.join(__dirname, '..', '..', 'public', 'electron-icon.png')
-        : path.join(PROJECT_ROOT, 'public', 'electron-icon.png');
-    try {
-        return nativeImage.createFromPath(iconPath);
-    } catch {
-        return nativeImage.createEmpty();
+function loadTrayIcon(): nativeImage {
+    // Try bundled tray-icon.png first
+    const candidates = isDev
+        ? [
+              path.join(_dirname, '..', '..', 'public', 'tray-icon.png'),
+              path.join(_dirname, '..', '..', 'public', 'electron-icon.png'),
+          ]
+        : [
+              path.join(PROJECT_ROOT, 'public', 'tray-icon.png'),
+              path.join(PROJECT_ROOT, 'public', 'electron-icon.png'),
+          ];
+    for (const p of candidates) {
+        try {
+            if (fsn.existsSync(p)) {
+                const img = nativeImage.createFromPath(p);
+                if (!img.isEmpty()) return img;
+            }
+        } catch { /* continue */ }
     }
+    // Ultimate fallback: embedded shield data URL
+    return nativeImage.createFromDataURL(SHIELD_ICON_URL);
 }
 
 function createTray() {
-    const icon = getTrayIcon();
-    tray = new Tray(
-        icon.isEmpty()
-            ? nativeImage.createFromDataURL(
-                  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAbwAAAG8B8aLcQwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAADwSURBVDiNpZMxDoJAEEXfruxQsLCysPQKPABegAcgr8kDsLf0DN7B3kt4A1gs7CwtbGxMLG1M4mYTd7PJJpnZ7P/zM5MBIpJOYl+SqSRvSYJfB/ACvCWZS/qQtCnpo7I1STqS2kmWkj4k9UrU96ukDUnDqNYo6V1SO8lKUj+JfQW4SjpP1pWkY2BH0t9knqX/A8+BpaS1pI6kdon6/7f+BNaS1pL6SS1JzST2J+APcAQ2wFbSOYnbSR1JzUr3F3AFVsA+8SOwT8L+HzAOvJLUTmIn0U+yqYAx8A04JM4vsK9AD3iVdEjiNJI6STbAB3hI2k9iJ9FPsqkAf2ADjCRtJDUBTkEPfnADYhZqLw2K1e4AAAAASUVORK5CYII=',
-              )
-            : icon,
-    );
+    const icon = loadTrayIcon();
+    tray = new Tray(icon);
     tray.setToolTip('KDS Guard - Dang giam sat');
     updateTrayMenu('Normal');
     tray.on('click', () => {
         if (mainWindow) {
-            if (mainWindow.isVisible()) {
-                mainWindow.focus();
-            } else {
-                mainWindow.show();
-            }
+            mainWindow.isVisible() ? mainWindow.focus() : mainWindow.show();
         } else {
             createWindow();
         }
@@ -88,177 +78,169 @@ function createTray() {
 
 function updateTrayMenu(riskLevel: string) {
     if (!tray) return;
-    const statusText: Record<string, string> = {
-        Normal: '[Normal]',
-        Low: '[Low]',
-        Medium: '[Medium]',
-        High: '[High]',
-        Critical: '[Critical]',
+    const statusMap: Record<string, string> = {
+        Normal: '[Normal]', Low: '[Low]', Medium: '[Medium]',
+        High: '[High]', Critical: '[Critical]',
     };
-    const label = statusText[riskLevel] ?? '[Normal]';
+    const label = statusMap[riskLevel] ?? '[Normal]';
     tray.setToolTip('KDS Guard - Muc rui ro: ' + label);
-    tray.setImage(
-        nativeImage.createFromDataURL(
-            'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAbwAAAG8B8aLcQwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAADwSURBVDiNpZMxDoJAEEXfruxQsLCysPQKPABegAcgr8kDsLf0DN7B3kt4A1gs7CwtbGxMLG1M4mYTd7PJJpnZ7P/zM5MBIpJOYl+SqSRvSYJfB/ACvCWZS/qQtCnpo7I1STqS2kmWkj4k9UrU96ukDUnDqNYo6V1SO8lKUj+JfQW4SjpP1pWkY2BH0t9knqX/A8+BpaS1pI6kdon6/7f+BNaS1pL6SS1JzST2J+APcAQ2wFbSOYnbSR1JzUr3F3AFVsA+8SOwT8L+HzAOvJLUTmIn0U+yqYAx8A04JM4vsK9AD3iVdEjiNJI6STbAB3hI2k9iJ9FPsqkAf2ADjCRtJDUBTkEPfnADYhZqLw2K1e4AAAAASUVORK5CYII=',
-        ),
+    // Update icon to match risk level
+    const iconUrl = riskLevel === 'Critical' || riskLevel === 'High'
+        ? SHIELD_ICON_URL  // same icon, works fine
+        : SHIELD_ICON_URL;
+    tray.setImage(nativeImage.createFromDataURL(iconUrl));
+    tray.setContextMenu(
+        Menu.buildFromTemplate([
+            { label: '--- KDS Guard ---', enabled: false },
+            { type: 'separator' },
+            { label: 'Mo Dashboard', click: () => { mainWindow?.show(); mainWindow?.focus(); } },
+            { label: riskLevel === 'Normal' ? 'Engine dang chay' : 'Phat hien: ' + label, enabled: false },
+            { type: 'separator' },
+            { label: 'Thoat', click: () => { isQuitting = true; app.quit(); } },
+        ]),
     );
-    const contextMenu = Menu.buildFromTemplate([
-        { label: '--- KDS Guard ---', enabled: false },
-        { type: 'separator' },
-        {
-            label: 'Mo Dashboard',
-            click: () => { mainWindow?.show(); mainWindow?.focus(); },
-        },
-        {
-            label: riskLevel === 'Normal' ? 'Engine dang chay' : 'Phat hien: ' + label,
-            enabled: false,
-        },
-        { type: 'separator' },
-        {
-            label: 'Thoat',
-            click: () => { isQuitting = true; app.quit(); },
-        },
-    ]);
-    tray.setContextMenu(contextMenu);
 }
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 1400,
-        height: 900,
-        minWidth: 1000,
-        minHeight: 700,
+        width: 1400, height: 900,
+        minWidth: 1000, minHeight: 700,
         title: 'KDS Guard Dashboard',
         backgroundColor: '#0a0e1a',
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
+            preload: path.join(_dirname, 'preload.js'),
             contextIsolation: true,
             nodeIntegration: false,
         },
         show: false,
     });
-    mainWindow.once('ready-to-show', () => { mainWindow?.show(); });
+    mainWindow.once('ready-to-show', () => mainWindow?.show());
     if (isDev) {
         mainWindow.loadURL('http://localhost:3000');
         mainWindow.webContents.openDevTools();
     } else {
-        mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
+        mainWindow.loadFile(path.join(_dirname, '..', 'dist', 'index.html'));
     }
-    mainWindow.on('close', (event) => {
-        if (!isQuitting) { event.preventDefault(); mainWindow?.hide(); }
-    });
+    mainWindow.on('close', (e) => { if (!isQuitting) { e.preventDefault(); mainWindow?.hide(); } });
     mainWindow.on('closed', () => { mainWindow = null; });
-    return mainWindow;
+}
+
+function getEnginePath(): string {
+    if (isDev) {
+        const p = path.join(PROJECT_ROOT, 'kds_guard', 'target', 'release', 'kds_guard.exe');
+        if (fsn.existsSync(p)) return p;
+        return path.join(PROJECT_ROOT, 'kds_guard', 'target', 'debug', 'kds_guard.exe');
+    }
+    const bundled = path.join(process.resourcesPath!, 'kds_guard.exe');
+    if (fsn.existsSync(bundled)) return bundled;
+    return path.join(path.dirname(app.getPath('exe')), 'kds_guard.exe');
 }
 
 function startEngine() {
     const enginePath = getEnginePath();
-    if (!fs.existsSync(enginePath)) {
-        console.error('[KDS Guard Electron] Engine not found at: ' + enginePath);
+    if (!fsn.existsSync(enginePath)) {
+        console.error('[KDS Guard] Engine not found: ' + enginePath);
         return;
     }
-    console.log('[KDS Guard Electron] Starting kds_guard.exe from: ' + enginePath);
-    try {
-        engineProcess = spawn(enginePath, {
-            cwd: path.dirname(enginePath),
-            stdio: ['ignore', 'pipe', 'pipe'],
-            detached: false,
-        });
-        engineProcess.stdout?.on('data', (data) => {
-            const line = data.toString().trim();
-            if (line) console.log('[kds_engine]', line);
-        });
-        engineProcess.stderr?.on('data', (data) => {
-            console.error('[kds_engine ERROR]', data.toString().trim());
-        });
-        engineProcess.on('error', (err) => {
-            console.error('[kds_engine ERROR] Failed to start:', err.message);
-        });
-        engineProcess.on('exit', (code) => {
-            if (!isQuitting) {
-                console.warn('[kds_engine] exited with code ' + code + ', restarting in 3s...');
-                setTimeout(startEngine, 3000);
-            }
-        });
-        console.log('[KDS Guard Electron] kds_guard.exe started (PID:', engineProcess.pid, ')');
-    } catch (err) {
-        console.error('[KDS Guard Electron] Could not start kds_guard.exe:', err);
+    console.log('[KDS Guard] Starting engine: ' + enginePath);
+
+    engineProcess = spawn(enginePath, ['--json-output', '-u', 'kds-user'], {
+        cwd: path.dirname(enginePath),
+        stdio: ['ignore', 'pipe', 'pipe'],
+        detached: false,
+    });
+
+    engineProcess.stdout?.on('data', (data: Buffer) => {
+        const line = data.toString().trim();
+        if (!line || !line.startsWith('{')) return;
+        broadcastWs(line);
+        try {
+            const json = JSON.parse(line);
+            const lvl = json.result?.risk_level ?? 'Normal';
+            const sc = json.result?.risk_score ?? 0;
+            console.log('[KDS Guard] >> ' + lvl + ' (score=' + sc.toFixed(2) + ') -> ' + wsCount() + ' clients');
+        } catch {}
+    });
+
+    engineProcess.stderr?.on('data', (d: Buffer) => console.error('[kds_engine ERR]', d.toString().trim()));
+    engineProcess.on('error', (e: Error) => console.error('[kds_engine ERR] Start failed:', e.message));
+    engineProcess.on('exit', (code: number | null) => {
+        if (!isQuitting) {
+            console.warn('[kds_engine] exited (code=' + code + '), restarting in 3s...');
+            setTimeout(startEngine, 3000);
+        }
+    });
+    console.log('[KDS Guard] Engine started (PID: ' + engineProcess.pid + ')');
+}
+
+// --- Integrated WebSocket Server (Node.js, no Python needed) ---
+let wsClients = new Set<WebSocket>();
+function wsCount(): number { return wsClients.size; }
+function broadcastWs(msg: string) {
+    wsClients.forEach((c) => { if (c.readyState === WebSocket.OPEN) { try { c.send(msg); } catch {} } });
+}
+
+function startWsServer() {
+    const PORT = 8765;
+    wss = new WebSocketServer({ port: PORT });
+    wss.on('connection', (ws) => {
+        wsClients.add(ws);
+        console.log('[WS Server] Client connected (' + wsCount() + ' total)');
+        ws.on('close', () => { wsClients.delete(ws); console.log('[WS Server] Client disconnected (' + wsCount() + ')'); });
+        ws.on('error', () => wsClients.delete(ws));
+    });
+    wss.on('error', (e: Error & { code?: string }) => {
+        if (e.code !== 'EADDRINUSE') console.error('[WS Server] Error:', e.message);
+    });
+    console.log('[WS Server] Listening on ws://localhost:' + PORT);
+    console.log('[WS Server] Dashboard connects to: ws://localhost:' + PORT);
+    startEngine(); // Start engine after WS server is ready
+}
+
+function stopWsServer() {
+    if (wss) {
+        wsClients.forEach((c) => { try { c.close(); } catch {} });
+        wsClients.clear();
+        wss.close();
+        wss = null;
+        console.log('[WS Server] Stopped');
     }
 }
 
-function startWsBridge() {
-    console.log('[KDS Guard Electron] Starting ws_bridge.py...');
-    console.log('[KDS Guard Electron] Script path:', WS_BRIDGE_SCRIPT);
-    try {
-        wsBridgeProcess = spawn('python', [WS_BRIDGE_SCRIPT], {
-            cwd: PROJECT_ROOT,
-            stdio: ['ignore', 'pipe', 'pipe'],
-            detached: false,
-        });
-        wsBridgeProcess.stdout?.on('data', (data) => {
-            const line = data.toString().trim();
-            if (line) console.log('[ws_bridge]', line);
-        });
-        wsBridgeProcess.stderr?.on('data', (data) => {
-            console.error('[ws_bridge ERROR]', data.toString().trim());
-        });
-        wsBridgeProcess.on('error', (err) => {
-            console.error('[ws_bridge ERROR] Failed to start:', err.message);
-        });
-        wsBridgeProcess.on('exit', (code) => {
-            if (!isQuitting) {
-                console.warn('[ws_bridge] exited with code ' + code + ', restarting in 3s...');
-                setTimeout(startWsBridge, 3000);
-            }
-        });
-        console.log('[KDS Guard Electron] ws_bridge.py started (PID:', wsBridgeProcess.pid, ')');
-    } catch (err) {
-        console.error('[KDS Guard Electron] Could not start ws_bridge.py:', err);
-    }
-}
-
-function showDetectionNotification(
-    riskLevel: string,
-    riskScore: number,
-    reasons: string[],
-) {
-    const isHigh = riskLevel === 'High' || riskLevel === 'Critical';
+function showDetectionNotification(riskLevel: string, score: number, reasons: string[]) {
     if (Notification.isSupported()) {
-        const notification = new Notification({
+        const isHigh = riskLevel === 'High' || riskLevel === 'Critical';
+        const n = new Notification({
             title: isHigh ? 'KDS GUARD - PHAT HIEN TAN CONG!' : 'KDS Guard - Canh bao',
-            body: 'Muc: ' + riskLevel + ' (' + riskScore + '%)\nLy do: ' + reasons.join(', '),
+            body: 'Muc: ' + riskLevel + ' (' + score + '%) | Ly do: ' + reasons.join(', '),
             urgency: isHigh ? 'critical' : 'normal',
-            silent: false,
         });
-        notification.on('click', () => { mainWindow?.show(); mainWindow?.focus(); });
-        notification.show();
+        n.on('click', () => { mainWindow?.show(); mainWindow?.focus(); });
+        n.show();
     }
     updateTrayMenu(riskLevel);
 }
 
 function getConnectedDevices(): string {
     try {
-        const output = execSync(
-            `powershell -NoProfile -Command "Get-PnpDevice -Class Keyboard,HIDClass,HidDevice -Status OK | Select-Object FriendlyName, InstanceId, Status | ConvertTo-Json -Compress"`,
+        const out = execSync(
+            `powershell -NoProfile -Command "Get-PnpDevice -Class Keyboard,HIDClass,HidDevice -Status OK | Select-Object FriendlyName,InstanceId,Status | ConvertTo-Json -Compress"`,
             { encoding: 'utf-8', timeout: 10000, windowsHide: true },
         );
-        return output;
+        return out;
     } catch {
         try {
-            const output = execSync(
-                `powershell -NoProfile -Command "Get-WmiObject Win32_Keyboard | Select-Object Name, DeviceID, Status | ConvertTo-Json -Compress"`,
+            return execSync(
+                `powershell -NoProfile -Command "Get-WmiObject Win32_Keyboard | Select-Object Name,DeviceID,Status | ConvertTo-Json -Compress"`,
                 { encoding: 'utf-8', timeout: 10000, windowsHide: true },
             );
-            return output;
-        } catch {
-            return '[]';
-        }
+        } catch { return '[]'; }
     }
 }
 
 ipcMain.on(
     'detection-update',
-    (_event, data: { riskLevel: string; riskScore: number; reasons: string[] }) => {
+    (_e, data: { riskLevel: string; riskScore: number; reasons: string[] }) => {
         updateTrayMenu(data.riskLevel);
         if (data.riskLevel === 'High' || data.riskLevel === 'Critical') {
             showDetectionNotification(data.riskLevel, data.riskScore, data.reasons);
@@ -266,68 +248,41 @@ ipcMain.on(
     },
 );
 
-ipcMain.handle('block-usb-device', async (_event, instanceId: string): Promise<{ success: boolean; message: string }> => {
+ipcMain.handle('block-usb-device', async (_e, id: string) => {
     try {
-        execSync(
-            `powershell -NoProfile -Command "Disable-PnpDevice -InstanceId '${instanceId}' -Confirm:\$False -ErrorAction SilentlyContinue"`,
-            { windowsHide: true, timeout: 10000 },
-        );
+        execSync(`powershell -NoProfile -Command "Disable-PnpDevice -InstanceId '${id}' -Confirm:\$False -ErrorAction SilentlyContinue"`, { windowsHide: true, timeout: 10000 });
         return { success: true, message: 'Da vo hieu hoa thiet bi USB' };
-    } catch {
-        return { success: false, message: 'Khong the vo hieu hoa thiet bi. Can quyen Administrator.' };
-    }
+    } catch { return { success: false, message: 'Can quyen Administrator.' }; }
 });
 
-ipcMain.handle('unblock-usb-device', async (_event, instanceId: string): Promise<{ success: boolean; message: string }> => {
+ipcMain.handle('unblock-usb-device', async (_e, id: string) => {
     try {
-        execSync(
-            `powershell -NoProfile -Command "Enable-PnpDevice -InstanceId '${instanceId}' -Confirm:\$False -ErrorAction SilentlyContinue"`,
-            { windowsHide: true, timeout: 10000 },
-        );
+        execSync(`powershell -NoProfile -Command "Enable-PnpDevice -InstanceId '${id}' -Confirm:\$False -ErrorAction SilentlyContinue"`, { windowsHide: true, timeout: 10000 });
         return { success: true, message: 'Da khoi phuc thiet bi USB' };
-    } catch {
-        return { success: false, message: 'Khong the khoi phuc thiet bi. Can quyen Administrator.' };
-    }
+    } catch { return { success: false, message: 'Can quyen Administrator.' }; }
 });
 
 ipcMain.handle('get-app-path', () => PROJECT_ROOT);
-
 ipcMain.handle('get-usb-devices', () => {
     const raw = getConnectedDevices();
-    try {
-        const parsed = JSON.parse(raw);
-        return parsed;
-    } catch {
-        return raw;
-    }
+    try { return JSON.parse(raw); } catch { return raw; }
 });
 
 app.on('second-instance', () => {
     if (mainWindow) {
-        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.isMinimized() && mainWindow.restore();
         mainWindow.show();
         mainWindow.focus();
     }
 });
-
 app.on('before-quit', () => { isQuitting = true; });
-
-app.on('will-quit', () => {
-    if (wsBridgeProcess) wsBridgeProcess.kill('SIGTERM');
-    if (engineProcess) engineProcess.kill('SIGTERM');
-    tray?.destroy();
-});
+app.on('will-quit', () => { stopWsServer(); engineProcess?.kill('SIGTERM'); tray?.destroy(); });
 
 app.whenReady().then(() => {
-    console.log('[KDS Guard Electron] App ready, starting...');
+    console.log('[KDS Guard] App ready, mode: ' + (isDev ? 'development' : 'production'));
     createWindow();
     createTray();
-    startEngine();
-    startWsBridge();
+    startWsServer(); // Starts WS server + engine automatically
 });
-
-app.on('window-all-closed', () => { });
-
-app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-});
+app.on('window-all-closed', () => {});
+app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });

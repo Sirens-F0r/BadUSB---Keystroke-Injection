@@ -10,10 +10,9 @@
     "dist/**/*",
     "dist-electron/**/*",
     "package.json",
-    "ws_bridge.py",
     "public/**/*"
   ],
-  "asar": true,
+  "asar": false,
   "extraResources": [
     {
       "from": "../kds_guard/target/release/kds_guard.exe",
@@ -23,7 +22,7 @@
   "win": {
     "target": [
       {
-        "target": "nsis",
+        "target": "portable",
         "arch": "x64"
       }
     ]
