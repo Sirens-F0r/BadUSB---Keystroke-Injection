@@ -1,6 +1,7 @@
 // KDS Guard – Footer
 import { Box, Typography } from '@mui/material';
 import { ReactElement } from 'react';
+import { drawerCloseWidth, drawerOpenWidth } from '..';
 
 const Footer = ({ open }: { open: boolean }): ReactElement => {
   return (
@@ -11,11 +12,12 @@ const Footer = ({ open }: { open: boolean }): ReactElement => {
         alignItems: 'center',
         justifyContent: 'flex-end',
         height: 40,
-        px: { xs: 3, sm: 5.175 },
+        px: { xs: 2, sm: 3 },
         bgcolor: 'background.default',
         borderTop: '1px solid',
         borderColor: 'divider',
-        ml: open ? 0 : 0,
+        ml: { xs: 0, sm: `${open ? drawerOpenWidth : drawerCloseWidth}px` },
+        transition: 'margin-left 0.2s',
       }}
     >
       <Typography variant="caption" color="text.disabled">

@@ -43,7 +43,7 @@ const DetectionRules = (): ReactElement => {
           sx={{ fontWeight: 700, fontSize: '0.65rem' }}
         />
       </Box>
-      <TableContainer component={SimpleBar} sx={{ maxHeight: 340 }}>
+      <TableContainer component={SimpleBar}>
         <Table sx={{ minWidth: 600 }}>
           <TableHead>
             <TableRow>

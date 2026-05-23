@@ -1,11 +1,11 @@
 import { useState, ReactElement, PropsWithChildren } from 'react';
-import { Box, Drawer, Toolbar } from '@mui/material';
+import { Box, Drawer } from '@mui/material';
 import Topbar from './Topbar/Topbar';
 import Sidebar from './Sidebar/Sidebar';
 import Footer from './Footer/Footer';
 
 export const drawerOpenWidth = 240;
-export const drawerCloseWidth = 110;
+export const drawerCloseWidth = 72;
 
 const MainLayout = ({ children }: PropsWithChildren): ReactElement => {
   const [open, setOpen] = useState<boolean>(false);
@@ -40,6 +40,9 @@ const MainLayout = ({ children }: PropsWithChildren): ReactElement => {
             width: open ? drawerOpenWidth : drawerCloseWidth,
             '& .MuiDrawer-paper': {
               width: open ? drawerOpenWidth : drawerCloseWidth,
+              bgcolor: 'background.default',
+              borderRight: '1px solid',
+              borderColor: 'divider',
             },
           }}
         >
@@ -51,17 +54,13 @@ const MainLayout = ({ children }: PropsWithChildren): ReactElement => {
           sx={{
             width: 1,
             flexGrow: 1,
-            pt: 3,
-            pr: { xs: 3, sm: 5.175 },
+            pt: 2,
+            pr: { xs: 2, sm: 3 },
             pb: 4,
-            pl: { xs: 3, sm: 5.25 },
+            pl: { xs: 2, sm: 3 },
           }}
         >
-          <Toolbar
-            sx={{
-              height: 64,
-            }}
-          />
+          <Box sx={{ height: 76, flexShrink: 0 }} />
           {children}
         </Box>
       </Box>

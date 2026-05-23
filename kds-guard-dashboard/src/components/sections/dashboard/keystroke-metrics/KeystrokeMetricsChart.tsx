@@ -22,7 +22,25 @@ interface KeystrokeMetricsChartProps {
 const KeystrokeMetricsChart = ({ chartRef, data, sx }: KeystrokeMetricsChartProps) => {
   const theme = useTheme();
 
-  const maxValues = [200, 100, 25, 50, 20, 60, 40];
+  // Tìm key chứa "BadUSB" hoặc "Injection" để phân biệt với normal
+  const keys = Object.keys(data);
+  const injectionKey = keys.find(
+    (k) => k.toLowerCase().includes('badusb') || k.toLowerCase().includes('injection'),
+  );
+  const normalKey = keys.find(
+    (k) => k.toLowerCase().includes('tb') || k.toLowerCase().includes('normal') || k.toLowerCase().includes('user'),
+  );
+
+  // Fallback: first key = normal, last key = injection
+  const normalData = data[normalKey ?? keys[0]] ?? [];
+  const injectionData = data[injectionKey ?? keys[keys.length - 1]] ?? [];
+
+  // Tính max value dựa trên dữ liệu thực tế cho scale hợp lý
+  const maxValues = keystrokeMetricsLabels.map((_, i) => {
+    const allValues = keys.map((k) => data[k]?.[i] ?? 0);
+    const maxVal = Math.max(...allValues);
+    return Math.ceil(maxVal * 1.2) || 100; // +20% padding, fallback 100
+  });
 
   const option = {
     tooltip: {
@@ -34,6 +52,7 @@ const KeystrokeMetricsChart = ({ chartRef, data, sx }: KeystrokeMetricsChartProp
         max: maxValues[index],
       })),
       shape: 'polygon',
+      radius: '65%',
       splitArea: {
         areaStyle: {
           color: ['transparent'],
@@ -59,8 +78,8 @@ const KeystrokeMetricsChart = ({ chartRef, data, sx }: KeystrokeMetricsChartProp
         type: 'radar',
         data: [
           {
-            value: data['Normal User'],
-            name: 'Normal User',
+            value: normalData,
+            name: normalKey ?? 'Người dùng',
             lineStyle: {
               color: theme.palette.primary.main,
               width: 2,
@@ -73,8 +92,8 @@ const KeystrokeMetricsChart = ({ chartRef, data, sx }: KeystrokeMetricsChartProp
             },
           },
           {
-            value: data['BadUSB Pattern'],
-            name: 'BadUSB Pattern',
+            value: injectionData,
+            name: injectionKey ?? 'BadUSB',
             lineStyle: {
               color: theme.palette.error.main,
               width: 2,

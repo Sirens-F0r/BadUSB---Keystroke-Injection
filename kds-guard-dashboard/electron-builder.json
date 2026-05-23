@@ -4,7 +4,7 @@
   "productName": "KDS Guard",
   "copyright": "Copyright 2026 — KDS Guard Project",
   "directories": {
-    "output": "C:\\Temp\\KDSGuard2\\release"
+    "output": "release"
   },
   "files": [
     "dist/**/*",
@@ -14,6 +14,12 @@
     "public/**/*"
   ],
   "asar": true,
+  "extraResources": [
+    {
+      "from": "../kds_guard/target/release/kds_guard.exe",
+      "to": "kds_guard.exe"
+    }
+  ],
   "win": {
     "target": [
       {

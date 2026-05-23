@@ -1,4 +1,4 @@
-# 🛡️ KDS Guard — BadUSB Detection via Keystroke Dynamics
+# KDS Guard — BadUSB Detection via Keystroke Dynamics
 
 Phát hiện & ngăn chặn tấn công chèn phím giả mạo (BadUSB / Rubber Ducky) bằng phân tích **động học gõ phím** (Keystroke Dynamics) theo thời gian thực.
 
@@ -6,49 +6,146 @@ Phát hiện & ngăn chặn tấn công chèn phím giả mạo (BadUSB / Rubber
 
 ## Mục lục
 
-- [Khởi động nhanh](#khởi-động-nhanh-2-terminal) ← Bắt đầu từ đây
-- [Khởi động chi tiết](#khởi-động-hệ-thống)
-  - [Bước 1 — Dashboard](#bước-1--dashboard-react)
-  - [Bước 2 — WebSocket Bridge](#bước-2--websocket-bridge)
-  - [Bước 3 — Engine Rust](#bước-3--engine-rust-chạy-as-administrator-để-bật-blockinput)
-- [Chạy Dashboard lâu dài](#chạy-dashboard-lâu-dài)
-- [Test với BadUSB thật](#test-với-badusb-thật)
-- [Kịch bản Demo](#kịch-bản-demo)
+- [Giới thiệu ứng dụng](#giới-thiệu-ứng-dụng)
+- [Khởi động nhanh](#khởi-động-nhanh)
+- [Tình trạng hiện tại](#tình-trạng-hiện-tại)
+- [Cấu trúc dự án](#cấu-trúc-dự-án)
 - [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
 - [8 Luật phát hiện](#8-luật-phát-hiện)
 - [Phân tích False Positive / False Negative](#phân-tích-false-positive--false-negative-của-từng-luật)
 - [Kịch bản với BadUSB thật](#kịch-bản-với-badusb-thật-thiết-bị-vật-lý)
 - [So sánh người thật vs BadUSB](#so-sánh-người-thật-vs-badusb)
+- [Khởi động hệ thống](#khởi-động-hệ-thống)
+- [Kịch bản Demo](#kịch-bản-demo)
 - [Cấu hình nâng cao](#cấu-hình-nâng-cao)
 - [Xử lý lỗi thường gặp](#xử-lý-lỗi-thường-gặp)
 - [Tài liệu chi tiết](#tài-liệu-chi-tiết)
 
 ---
 
-## Khởi động nhanh (2 Terminal)
+## Giới thiệu ứng dụng
 
-Cách nhanh nhất để chạy toàn bộ hệ thống:
+**KDS Guard** là ứng dụng desktop bảo mật phát hiện tấn công BadUSB bằng phân tích động học gõ phím. Ứng dụng sử dụng engine Rust để bắt sự kiện bàn phím, phân tích 22 đặc trưng keystroke, và đưa ra quyết định phát hiện tấn công trong thời gian thực.
+
+### Desktop Application (Electron)
+
+Ứng dụng được đóng gói thành file `.exe` để người dùng có thể chạy trực tiếp mà không cần cài đặt môi trường phát triển.
+
+```
+kds-guard-dashboard/release/
+├── KDS Guard Setup 1.0.0.exe   # Trình cài đặt (installer)
+├── win-unpacked/
+│   ├── KDS Guard.exe            # Portable executable (chạy trực tiếp)
+│   └── resources/
+│       ├── app.asar             # Ứng dụng Electron (119.46 MB)
+│       └── kds_guard.exe        # Engine Rust (2.04 MB) - đã bundle sẵn
+```
+
+| File | Kích thước | Mô tả |
+|------|-----------|--------|
+| `KDS Guard Setup 1.0.0.exe` | 112.51 MB | Trình cài đặt (NSIS installer) |
+| `KDS Guard.exe` (portable) | 216.08 MB | Chạy trực tiếp không cần cài |
+| `kds_guard.exe` (bundled) | 2.04 MB | Engine Rust đã đóng gói bên trong |
+
+### Cách sử dụng
+
+**Cách 1 — Chạy portable (khuyên dùng):**
+```
+Double-click "KDS Guard.exe" trong thư mục win-unpacked/
+```
+
+**Cách 2 — Cài đặt:**
+```
+Double-click "KDS Guard Setup 1.0.0.exe"
+Chọn thư mục cài đặt → Next → Install
+```
+
+### Hướng dẫn cài đặt (NSIS Installer)
+
+1. **Double-click** file `KDS Guard Setup 1.0.0.exe`
+2. Cửa sổ **User Account Control** hiện lên → nhấn **Yes** (cấp quyền Admin để cài đặt)
+3. Chọn ngôn ngữ → nhấn **OK**
+4. Nhấn **Next** để tiếp tục
+5. **Chọn thư mục cài đặt** (mặc định: `C:\Program Files\KDS Guard`):
+   - Nhấn **Browse** để chọn thư mục khác (khuyên dùng: giữ mặc định)
+   - Nhấn **Next**
+6. **Chọn shortcuts:**
+   - ☑ Create a desktop shortcut (tạo icon trên Desktop)
+   - ☑ Create a Start Menu shortcut (tạo shortcut trong Start Menu)
+   - Nhấn **Next**
+7. Nhấn **Install** để bắt đầu cài
+8. Đợi quá trình cài đặt hoàn tất → nhấn **Finish**
+
+> **Lưu ý:** Sau khi cài xong, ứng dụng sẽ tự khởi động. Nếu muốn chạy bằng quyền Administrator để bật tính năng chặn bàn phím (BlockInput), chuột phải vào `KDS Guard.exe` → **Run as administrator**.
+
+### Tự động khởi động khi mở app
+
+Khi mở ứng dụng (portable hoặc installer), hệ thống sẽ **tự động khởi động**:
+
+1. **KDS Guard Engine** — `kds_guard.exe` (bundled bên trong app)
+   - Bắt đầu giám sát bàn phím ngay lập tức
+   - Phân tích 22 đặc trưng keystroke theo thời gian thực
+   - Đánh giá risk score qua 8 luật (R1-R8)
+
+2. **WebSocket Bridge** — `ws_bridge.py` (bundled bên trong app)
+   - Kết nối engine với Dashboard
+   - Broadcast sự kiện phát hiện qua WebSocket
+   - Dashboard nhận dữ liệu realtime và cập nhật biểu đồ live
+
+3. **Dashboard** — Giao diện web trong cửa sổ Electron
+   - Hiển thị Risk Score, Threat Level, Keystroke Metrics
+   - Biểu đồ ECharts cập nhật realtime
+   - Thông báo Windows Notification khi phát hiện tấn công
+
+> **Yêu cầu:** `ws_bridge.py` cần **Python** được cài sẵn trên máy. Nếu chưa có, tải tại [python.org](https://www.python.org/downloads/) và chọn **Add Python to PATH** khi cài đặt.
+
+### Tính năng chính
+
+- **Dashboard tương tác** — 10 trang: Dashboard, Realtime Monitor, Detection Rules, Alerts, Devices, Logs, Policies, Settings, Profile, About
+- **Giám sát thời gian thực** — Biểu đồ ECharts live cập nhật đặc trưng gõ phím
+- **Phát hiện tấn công** — 8 luật kết hợp, phản ứng từ thông báo đến chặn input
+- **Hệ thống cảnh báo** — Windows Notification khi phát hiện mức HIGH/CRITICAL
+- **Quản lý thiết bị** — Liệt kê và chặn thiết bị USB keyboard/HID
+- **Giao diện dark mode** — Thiết kế hiện đại với theme tối
+
+---
+
+## Khởi động nhanh
+
+### Cách 1 — Chạy ứng dụng đóng gói (không cần setup)
+
+```powershell
+# Di chuyển vào thư mục release
+cd "C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO\kds-guard-dashboard\release\win-unpacked"
+
+# Double-click KDS Guard.exe HOẶC chạy từ terminal:
+.\"KDS Guard.exe"
+```
+
+> **Lưu ý:** Chạy **Run as Administrator** để engine có thể sử dụng BlockInput (chặn bàn phím khi phát hiện tấn công).
+
+### Cách 2 — Development mode (3 Terminal)
+
+Cần thiết lập môi trường phát triển:
 
 **Terminal 1 — Dashboard:**
-
 ```powershell
 cd "C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO\kds-guard-dashboard"
 npm run dev
 ```
 → Mở trình duyệt: **http://localhost:3000**
 
-**Terminal 2 — Realtime bridge:**
-
+**Terminal 2 — WebSocket Bridge:**
 ```powershell
 cd "C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO"
 python ws_bridge.py
 ```
 
-> **Lưu ý PowerShell 7 (`pwsh`):** Dùng `;` thay vì `&&` để nối commands:
-> ```powershell
-> # Sai (pwsh):  npm run dev && python ws_bridge.py
-> # Đúng (pwsh): npm run dev ; python ws_bridge.py
-> ```
+**Terminal 3 — Rust Engine (Run as Administrator):**
+```powershell
+cd "C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO\kds_guard\target\release"
+.\kds_guard.exe --json-output -u test_user
+```
 
 ---
 
@@ -57,9 +154,11 @@ python ws_bridge.py
 | Thành phần | Trạng thái | Ghi chú |
 |-----------|-----------|---------|
 | Rust Engine | ✅ Sẵn sàng | `kds_guard/target/release/kds_guard.exe` |
-| React Dashboard | ✅ Sẵn sàng | `http://localhost:3000` (9 trang) |
+| React Dashboard | ✅ Sẵn sàng | `http://localhost:3000` (10 trang) |
 | WebSocket Bridge | ✅ Sẵn sàng | `ws_bridge.py` |
-| BadUSB Simulator | ✅ Sẵn sàng | `scripts/simulate_badusb.py` (dùng Windows API, không cần pyautogui) |
+| Electron App | ✅ Sẵn sàng | `release/KDS Guard.exe` (portable) |
+| Installer | ✅ Sẵn sàng | `release/KDS Guard Setup 1.0.0.exe` |
+| BadUSB Simulator | ✅ Sẵn sàng | `scripts/simulate_badusb.py` |
 | Dataset | ✅ 21,963 mẫu | human: 21,731 + injection: 232 |
 | ML Models | ✅ Đã huấn luyện | RF, IF, OCSVM — F1=1.00 |
 | Evaluation Report | ✅ Sẵn sàng | `data/evaluation_report.json` |
@@ -99,8 +198,19 @@ DOANCOSO/
 │   │   └── response.rs         # BlockInput + Windows Notification
 │   └── target/release/kds_guard.exe
 ├── ws_bridge.py                 # WebSocket bridge (Rust → Dashboard)
-├── kds-guard-dashboard/         # React Dashboard
-│   └── src/pages/               # 9 trang: Dashboard, Realtime Monitor...
+├── kds-guard-dashboard/        # Electron Desktop App
+│   ├── electron/
+│   │   ├── main.ts            # Electron main process
+│   │   └── preload.ts         # Preload script
+│   ├── src/
+│   │   ├── pages/             # 10 trang React
+│   │   ├── components/        # UI components
+│   │   └── providers/         # Theme, WebSocket providers
+│   ├── release/               # Build output
+│   │   ├── KDS Guard Setup 1.0.0.exe
+│   │   └── win-unpacked/
+│   │       └── KDS Guard.exe  # Portable executable
+│   └── electron-builder.json  # Cấu hình đóng gói
 ├── scripts/
 │   ├── simulate_badusb.py       # Mô phỏng BadUSB (Windows API)
 │   ├── simulate_injection.py    # Injection pattern simulator
@@ -140,18 +250,18 @@ DOANCOSO/
 ┌──────────────────────────────────────────────────────────────────┐
 │  TẦNG 3: DETECTOR (8 luật R1-R8)                                │
 │  R1: mean_ft < 30ms (+0.30)  R5: iqr_ht < 5ms (+0.15)           │
-│  R2: cv < 0.15      (+0.25)  R6: modifier > 40% (+0.10)         │
-│  R3: speed > 20keys/s (+0.35) R7: min_ft < 5ms  (+0.10)         │
+│  R2: cv < 0.15      (+0.25)  R6: modifier > 40% (+0.10)          │
+│  R3: speed > 20keys/s (+0.35) R7: min_ft < 5ms  (+0.10)          │
 │  R4: burst ≥ 15     (+0.20)  R8: injection FP  (+0.25)           │
 │  Risk Score = tổng trọng số → NORMAL / LOW / MEDIUM / HIGH / CRITICAL │
 └─────────────────────────┬────────────────────────────────────────┘
                           │
                           ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│  TẦNG 4: POLICY + RESPONSE                                      │
-│  NORMAL  → Cho phép         MEDIUM  → Windows Notification      │
+│  TẦNG 4: POLICY + RESPONSE                                       │
+│  NORMAL  → Cho phép         MEDIUM  → Windows Notification       │
 │  LOW     → Ghi log          HIGH    → BlockInput 2s + Alert      │
-│  CRITICAL → BlockInput 5s + Alert + Timeout cứng                 │
+│  CRITICAL → BlockInput 5s + Alert + Timeout cứng                  │
 └─────────────────────────┬────────────────────────────────────────┘
               ┌───────────┴───────────┐
               ▼                       ▼
@@ -163,7 +273,7 @@ DOANCOSO/
 ## 8 Luật phát hiện
 
 | # | Luật | Điều kiện | Trọng số |
-|---|------|-----------|---------|
+|---|------|-----------|-----------|
 | R1 | Flight Time thấp | mean_flight_time < 30ms | +0.30 |
 | R2 | CV thấp | cv_flight_time < 0.15 | +0.25 |
 | R3 | Tốc độ cao | speed > 20 keys/s + ft < 50ms | +0.35 |
@@ -178,9 +288,6 @@ DOANCOSO/
 ---
 
 ## Phân tích False Positive & False Negative của từng luật
-
-> **False Positive (FP):** Luật nhầm người thật thành BadUSB → gây phiền cho người dùng.
-> **False Negative (FN):** Luật bỏ sót BadUSB thật → hệ thống không cảnh báo.
 
 ### R1 — Flight Time thấp (`mean_ft < 30ms`, +0.30)
 
@@ -274,7 +381,7 @@ DOANCOSO/
 ### Tổng hợp rủi ro
 
 | Luật | False Positive | False Negative | Nhận xét |
-|------|-------------|-------------|---------|
+|------|---------------|---------------|-----------|
 | R1 | 🟢 Rất thấp | 🟡 Thấp | Delay > 35ms bypass được |
 | R2 | 🟢 Rất thấp | 🟢 Gần bằng 0 | Luật mạnh nhất |
 | R3 | 🟢 Thấp | 🟡 Thấp | Điều kiện kép an toàn |
@@ -289,8 +396,6 @@ DOANCOSO/
 ---
 
 ## Kịch bản với BadUSB thật (thiết bị vật lý)
-
-> Phân tích cách hệ thống phản ứng với từng loại thiết bị BadUSB thực tế.
 
 ### Thiết bị phổ biến & đặc điểm
 
@@ -410,6 +515,21 @@ R8 không trigger vì không có khoảng nghỉ, nhưng R1-R5 vẫn đủ để
 
 ---
 
+## So sánh người thật vs BadUSB
+
+| Tiêu chí | Người thật | BadUSB |
+|---------|------------|--------|
+| Tốc độ gõ | 5-12 keys/s | 30-50 keys/s |
+| mean_flight_time | 150-400 ms | 15-35 ms |
+| std_flight_time | 50-150 ms | 1-5 ms |
+| cv_flight_time | 0.30-0.70 | 0.05-0.15 |
+| max_burst_length | 0-3 | 25-40 |
+| Risk Score | 0.00 | ~0.85-1.00 |
+| Risk Level | NORMAL ✅ | CRITICAL 🔴 |
+| Action | Allow | BlockInput 3-5s + Alert |
+
+---
+
 ## Khởi động hệ thống
 
 ### Yêu cầu đã kiểm tra
@@ -434,7 +554,7 @@ npm run dev
 
 → Mở trình duyệt: **http://localhost:3000**
 
-Dashboard có **9 trang**:
+Dashboard có **10 trang**:
 - **Dashboard** — Tổng quan với 8 widget (Risk Score, Threat Level, Keystroke Metrics, Activity Timeline, Recent Alerts, Event Log, Detection Rules, System Overview)
 - **Realtime Monitor** — Giám sát trực tiếp đặc trưng gõ phím khi hệ thống đang chạy
 - **Detection Rules** — Chi tiết 8 luật phát hiện
@@ -443,6 +563,7 @@ Dashboard có **9 trang**:
 - **Logs** — Nhật ký chi tiết
 - **Policies** — Chính sách phản hồi
 - **Settings** — Cấu hình ngưỡng
+- **Profile** — Hồ sơ người dùng
 - **About** — Thông tin đồ án
 
 ---
@@ -489,129 +610,11 @@ Hoặc kết hợp pipe:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│  Terminal 1                        Terminal 2             Terminal 3       │
-│  cd kds-guard-dashboard; npm run dev  python ws_bridge.py    (optional)      │
-│  Dashboard                           WebSocket Bridge        python simulate_ │
-│  localhost:3000                      ws://localhost:8765    badusb.py       │
+│  Terminal 1                        Terminal 2             Terminal 3           │
+│  cd kds-guard-dashboard; npm run dev  python ws_bridge.py    (optional)        │
+│  Dashboard                           WebSocket Bridge        python simulate_   │
+│  localhost:3000                      ws://localhost:8765    badusb.py           │
 └──────────────────────────────────────────────────────────────────────────────┘
-```
-
-> **Lưu ý PowerShell 7 (`pwsh`):** Dùng `;` thay vì `&&` để nối commands:
-> ```powershell
-> # Sai (pwsh):  npm run dev && python ws_bridge.py
-> # Đúng (pwsh): npm run dev ; python ws_bridge.py
-> # Đúng (powershell.exe): npm run dev && python ws_bridge.py
-> ```
-
----
-
-### Chạy Dashboard lâu dài
-
-**Cách 1 — 2 terminal riêng (khuyên dùng)**
-
-```powershell
-# Terminal 1: Dashboard
-cd "C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO\kds-guard-dashboard"
-npm run dev
-# Mở trình duyệt: http://localhost:3000
-
-# Terminal 2: Realtime bridge
-cd "C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO"
-python ws_bridge.py
-```
-
-**Cách 2 — Dev server chạy nền (không chiếm terminal)**
-
-```powershell
-# PowerShell 7 (pwsh)
-cd "C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO\kds-guard-dashboard"
-Start-Process -FilePath "npm" -ArgumentList "run dev" -NoNewWindow:$false -RedirectStandardOutput "$env:TEMP\kds_dashboard.log"
-
-# PowerShell 5
-cd "C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO\kds-guard-dashboard"
-Start-Process -FilePath "npm" -ArgumentList "run dev" -NoNewWindow
-```
-
-**Cách 3 — Bản production (không cần dev server)**
-
-```powershell
-cd "C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO\kds-guard-dashboard"
-npm run build
-npm run preview   # http://localhost:4173
-```
-
----
-
-### Test với BadUSB thật
-
-#### Thiết bị cần
-
-| Thiết bị | Mục đích |
-|----------|----------|
-| **Arduino / Seeed XIAO** nạp firmware `kds_guard.ino` | Thu keystroke + gửi serial |
-| **Máy victim** chạy `kds_guard.exe` | Phát hiện tấn công |
-| **Máy monitor** chạy Dashboard | Quan sát kết quả realtime |
-
-#### Luồng hoạt động
-
-```
-[BadUSB] --(keyboard HID)--> [kds_guard.exe (victim)]
-                                       |
-                                 [phát hiện injection]
-                                       |
-                                 [ws_bridge.py]
-                                       |
-                                 [Dashboard localhost:3000]
-```
-
-#### Bước thực hiện
-
-**1. Victim machine — chạy engine (as Administrator):**
-
-```powershell
-# Cách A: ws_bridge tự khởi động kds_guard.exe
-cd "C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO"
-python ws_bridge.py
-
-# Cách B: Chạy trực tiếp
-cd "C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO\kds_guard\target\release"
-.\kds_guard.exe --json-output -u victim_user
-```
-
-**2. Monitor machine — chạy Dashboard:**
-
-```powershell
-cd "C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO\kds-guard-dashboard"
-npm run dev   # http://localhost:3000
-```
-
-**3. Cắm BadUSB vào victim machine.**
-
-**4. Quan sát kết quả trên Dashboard monitor:**
-
-- **Alerts tab** → thấy cảnh báo `injection` với confidence cao
-- **Realtime Monitor** → flight time < 20ms, speed > 12 k/s
-- **Event Log** → timestamp + source device
-
-#### Payload mẫu để test (không cần BadUSB vật lý)
-
-```powershell
-# Chạy simulator trực tiếp (không cần BadUSB)
-cd "C:\Users\LOQ\OneDrive\Ứng dụng\Tài liệu\DOANCOSO"
-python scripts/simulate_badusb.py --speed 50
-
-# Payload cụ thể
-python scripts/simulate_badusb.py --custom "powershell -nop -c whoami" --speed 100
-```
-
-#### Kết quả mong đợi
-
-```
-Risk Score: 0.85-1.00 → CRITICAL (đỏ)
-Threat Level: HIGH → CRITICAL
-Trên Console: 🔴 CRITICAL | R1+R2+R3+R4+R5
-Windows Notification: "PHÁT HIỆN TẤN CÔNG HID INJECTION!"
-Input: Bị chặn 3-5 giây (BlockInput)
 ```
 
 ---
@@ -724,40 +727,6 @@ python scripts/export_dashboard_snapshot.py
 
 ---
 
-## Giám sát thực (Realtime) ở đâu trên Dashboard?
-
-### Trang **Realtime Monitor** (sidebar) — chính là nơi giám sát realtime
-
-Trang này kết nối WebSocket `ws://localhost:8765` để hiển thị dữ liệu thời gian thực từ Rust engine. Sau khi implement xong:
-
-- **Trạng thái kết nối** — chip `● LIVE` (xanh) khi WebSocket kết nối thành công, `● OFFLINE` khi chưa kết nối
-- **Kết quả phát hiện** — điểm rủi ro, mức đe dọa, thanh progress
-- **Luật kích hoạt** — chip R1-R8 được trigger
-- **Chi tiết lý do** — từng lý do cụ thể
-- **Đặc trưng gõ phím** — 11 metric từ FeatureVector (flight time, CV, speed...)
-- **Lịch sử sự kiện** — bảng realtime các sự kiện gần đây
-
-### Trên trang **Dashboard** (mặc định)
-
-Dashboard chính hiển thị **dữ liệu snapshot** từ dataset offline (polling file JSON mỗi 15s). Không phải dữ liệu realtime thật. Để xem realtime thật sự, vào trang **Realtime Monitor**.
-
----
-
-## So sánh người thật vs BadUSB
-
-| Tiêu chí | Người thật | BadUSB |
-|---------|------------|--------|
-| Tốc độ gõ | 5-12 keys/s | 30-50 keys/s |
-| mean_flight_time | 150-400 ms | 15-35 ms |
-| std_flight_time | 50-150 ms | 1-5 ms |
-| cv_flight_time | 0.30-0.70 | 0.05-0.15 |
-| max_burst_length | 0-3 | 25-40 |
-| Risk Score | 0.00 | ~0.85-1.00 |
-| Risk Level | NORMAL ✅ | CRITICAL 🔴 |
-| Action | Allow | BlockInput 3-5s + Alert |
-
----
-
 ## Tham số CLI của Engine
 
 | Tham số | Mặc định | Mô tả |
@@ -854,10 +823,12 @@ python scripts/integrate_datasets.py --rust-collect --merge
 |-----------|-----------|
 | Engine | Rust (performance, memory safety) |
 | Bắt phím | rdev (cross-platform) + WinAPI BlockInput |
+| Desktop App | Electron 42 + TypeScript |
 | Dashboard | React 18 + TypeScript + MUI v5 + ECharts |
 | Real-time | WebSocket bridge (Python websockets) |
 | ML | scikit-learn (RF, IF, OCSVM) |
 | Visualization | ECharts |
+| Packaging | electron-builder |
 
 ---
 

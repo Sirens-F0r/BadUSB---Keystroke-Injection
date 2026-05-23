@@ -78,7 +78,7 @@ function getFeatureMetrics(f: Record<string, unknown> | null): FeatureMetric[] |
     { label: 'Tốc độ gõ', value: (f.typing_speed as number)?.toFixed(1) ?? '—', unit: 'keys/s', key: 'typing_speed' },
     { label: 'Hold Time TB', value: (f.mean_hold_time as number)?.toFixed(1) ?? '—', unit: 'ms', key: 'mean_hold_time' },
     { label: 'IQR Hold Time', value: (f.iqr_hold_time as number)?.toFixed(1) ?? '—', unit: 'ms', key: 'iqr_hold_time' },
-    { label: 'Burst t??i ?', value: (f.max_burst_length as number) ?? 0, unit: 'keys', key: 'max_burst_length' },
+    { label: 'Burst tối đa', value: (f.max_burst_length as number) ?? 0, unit: 'keys', key: 'max_burst_length' },
     { label: 'Modifier Ratio', value: (((f.modifier_ratio as number) ?? 0) * 100).toFixed(1), unit: '%', key: 'modifier_ratio' },
     { label: 'Flight Time min', value: (f.min_flight_time as number)?.toFixed(1) ?? '—', unit: 'ms', key: 'min_flight_time' },
     { label: 'P5 Flight Time', value: (f.p5_flight_time as number)?.toFixed(1) ?? '—', unit: 'ms', key: 'mean_flight_time' },
@@ -254,7 +254,7 @@ const RealtimeMonitor = (): ReactElement => {
                       <Box component="td" sx={{ px: 2, py: 1.5, fontSize: '0.78rem', color, whiteSpace: 'nowrap' }}>
                         {isDetection ? `${riskLevelEmoji((data?.risk_level as RiskLevel) ?? 'Normal')} ${label}` : msg.type}
                       </Box>
-                      <Box component="td" sx={{ px: 2, py: 1.5, fontSize: '0.78rem', color: 'common.white', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                      <Box component="td" sx={{ px: 2, py: 1.5, fontSize: '0.78rem', color: 'text.primary', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
                         {isDetection ? ((data?.risk_score as number) ?? 0).toFixed(2) : '—'}
                       </Box>
                       <Box component="td" sx={{ px: 2, py: 1.5, fontSize: '0.78rem', color, whiteSpace: 'nowrap' }}>

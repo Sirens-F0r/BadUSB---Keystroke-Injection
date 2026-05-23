@@ -37,14 +37,14 @@ const Topbar = ({
     <AppBar
       position="fixed"
       sx={{
-        left: 0,
-        ml: isMobileScreen ? 0 : open ? 60 : 27.5,
+        left: isMobileScreen ? 0 : open ? drawerOpenWidth : drawerCloseWidth,
         width: isMobileScreen
           ? 1
           : open
             ? `calc(100% - ${drawerOpenWidth}px)`
             : `calc(100% - ${drawerCloseWidth}px)`,
         paddingRight: '0 !important',
+        transition: 'left 0.2s, width 0.2s',
       }}
     >
       <Toolbar
@@ -55,6 +55,8 @@ const Topbar = ({
         sx={{
           bgcolor: 'background.default',
           height: 64,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
         }}
       >
         <Stack direction="row" gap={2} alignItems="center" ml={2.5} flex="1 1 52.5%">

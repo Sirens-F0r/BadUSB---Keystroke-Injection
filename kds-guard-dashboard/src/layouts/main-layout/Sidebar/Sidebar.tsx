@@ -28,7 +28,7 @@ const Sidebar = ({ open }: { open: boolean }): ReactElement => {
         <RouterLink
           to="/"
           style={{
-            marginTop: 24,
+            marginTop: 12,
             textDecoration: 'none',
             display: 'flex',
             alignItems: 'center',
@@ -38,7 +38,7 @@ const Sidebar = ({ open }: { open: boolean }): ReactElement => {
           <Image
             src={logoPath}
             alt="KDS Guard"
-            height={open ? 52 : 36}
+            height={open ? 48 : 32}
             sx={{ objectFit: 'contain' }}
           />
         </RouterLink>

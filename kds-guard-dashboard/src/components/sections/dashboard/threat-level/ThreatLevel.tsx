@@ -28,49 +28,56 @@ const ThreatLevel = (): ReactElement => {
   }, [chartRef]);
 
   return (
-    <Paper sx={{ p: 3, borderRadius: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+    <Paper sx={{ p: 3, borderRadius: 3, height: 1, display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
         <Box>
           <Typography variant="h5" color="text.primary" fontWeight={600}>
             Mức đe dọa
           </Typography>
-          <Typography variant="caption" color="text.disabled">
+          <Typography variant="caption" color="text.disabled" sx={{ display: 'block', maxWidth: 220 }}>
             {systemOverview.threatDescription}
           </Typography>
         </Box>
         <Typography
-          variant="h3"
+          variant="h4"
           color="success.main"
           fontFamily="monospace"
           fontWeight={700}
-          sx={{ lineHeight: 1 }}
+          sx={{ lineHeight: 1, flexShrink: 0, ml: 1 }}
         >
           {systemOverview.threatLevel}
         </Typography>
       </Box>
       <Box
         flex={1}
-        sx={{ position: 'relative' }}
+        sx={{
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 160,
+        }}
       >
         <ThreatGaugeChart
           chartRef={chartRef}
           value={gaugeValue}
           sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            flex: '1 1 0%',
-            maxHeight: 120,
+            width: '100%',
+            height: '100%',
+            minHeight: 140,
           }}
         />
         <Typography
           variant="h3"
           color="text.primary"
-          textAlign="center"
-          mx="auto"
-          position="absolute"
-          left={0}
-          right={0}
-          bottom={0}
+          fontWeight={700}
+          sx={{
+            position: 'absolute',
+            bottom: 8,
+            left: '50%',
+            transform: 'translateX(-50%)',
+          }}
         >
           {Math.round(gaugeValue)}%
         </Typography>

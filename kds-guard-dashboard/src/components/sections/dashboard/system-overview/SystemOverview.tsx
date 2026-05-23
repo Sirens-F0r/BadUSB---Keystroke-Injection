@@ -8,7 +8,12 @@ import { SystemMetric } from 'data/system-overview-data';
 
 const StatusItem = ({ metric }: { metric: SystemMetric }): ReactElement => {
   return (
-    <Stack direction="row" alignItems="center" gap={3} flex={1} minWidth={180}>
+    <Stack
+      direction="row"
+      alignItems="center"
+      gap={2}
+      sx={{ flex: 1, minWidth: 200, px: 3, py: 2.5 }}
+    >
       <Box
         sx={{
           width: 44,
@@ -17,24 +22,29 @@ const StatusItem = ({ metric }: { metric: SystemMetric }): ReactElement => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: `${metric.color}`,
+          bgcolor: (theme) => {
+            const colorVal = theme.palette.mode === 'dark'
+              ? 'rgba(255,255,255,0.08)'
+              : 'rgba(0,0,0,0.06)';
+            return colorVal;
+          },
           flexShrink: 0,
         }}
       >
-        <IconifyIcon icon={metric.icon} width={22} height={22} color="text.primary" />
+        <IconifyIcon icon={metric.icon} width={22} height={22} sx={{ color: metric.color }} />
       </Box>
-      <Box>
+      <Box sx={{ minWidth: 0 }}>
         <Typography
-          variant="h4"
+          variant="h5"
           color="text.primary"
           fontFamily="monospace"
           fontWeight={700}
-          lineHeight={1}
-          mb={0.5}
+          lineHeight={1.2}
+          noWrap
         >
           {metric.value}
         </Typography>
-        <Typography variant="caption" color="text.disabled" display="block">
+        <Typography variant="caption" color="text.disabled" display="block" noWrap>
           {metric.label}
         </Typography>
       </Box>
@@ -46,17 +56,18 @@ const SystemOverview = (): ReactElement => {
   const { systemOverview } = useDashboardSnapshot();
 
   return (
-    <Box mb={4}>
+    <Box mb={3}>
       <Stack
         direction="row"
         alignItems="stretch"
-        gap={0}
+        flexWrap="wrap"
         divider={
           <Box
             sx={{
               width: 1,
               bgcolor: 'divider',
               alignSelf: 'stretch',
+              display: { xs: 'none', md: 'block' },
             }}
           />
         }

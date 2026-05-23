@@ -26,6 +26,8 @@ const ThreatGaugeChart = ({ chartRef, value = 12, sx }: ThreatGaugeChartProps) =
     series: [
       {
         type: 'gauge',
+        center: ['50%', '70%'],
+        radius: '90%',
         startAngle: 180,
         endAngle: 0,
         min: 0,
@@ -55,7 +57,7 @@ const ThreatGaugeChart = ({ chartRef, value = 12, sx }: ThreatGaugeChartProps) =
         axisLine: {
           lineStyle: {
             width: 18,
-            color: [[1, theme.palette.grey[800]]],
+            color: [[1, theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200]]],
           },
         },
         splitLine: { show: false },

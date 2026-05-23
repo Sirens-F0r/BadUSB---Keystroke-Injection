@@ -17,37 +17,33 @@ const Dashboard = (): ReactElement => {
   return (
     <>
       <SystemOverview />
-      <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap={3.5}>
-        {/* Row 1: Risk Score + Threat Level */}
-        <Box gridColumn={{ xs: 'span 12', md: 'span 6' }} order={{ xs: 0 }}>
+      <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap={3}>
+        {/* Row 1: Risk Score (wider) + Threat Level (narrower) */}
+        <Box gridColumn={{ xs: 'span 12', md: 'span 7' }}>
           <RiskScore />
         </Box>
-        <Box gridColumn={{ xs: 'span 12', md: 'span 6' }} order={{ xs: 1 }}>
+        <Box gridColumn={{ xs: 'span 12', md: 'span 5' }}>
           <ThreatLevel />
         </Box>
 
-        {/* Row 2: Detection Rules Table */}
-        <Box gridColumn={{ xs: 'span 12', lg: 'span 8' }} order={{ xs: 2 }}>
+        {/* Row 2: Detection Rules + Keystroke Metrics */}
+        <Box gridColumn={{ xs: 'span 12', lg: 'span 7' }}>
           <DetectionRules />
         </Box>
-
-        {/* Row 2 Right: Keystroke Metrics Comparison */}
-        <Box gridColumn={{ xs: 'span 12', lg: 'span 4' }} order={{ xs: 3 }}>
+        <Box gridColumn={{ xs: 'span 12', lg: 'span 5' }}>
           <KeystrokeMetrics />
         </Box>
 
-        {/* Row 3: Activity Timeline */}
-        <Box gridColumn={{ xs: 'span 12', xl: 'span 8' }} order={{ xs: 4 }}>
+        {/* Row 3: Activity Timeline + Recent Alerts */}
+        <Box gridColumn={{ xs: 'span 12', lg: 'span 8' }}>
           <ActivityTimeline />
         </Box>
-
-        {/* Row 3 Right: Recent Alerts */}
-        <Box gridColumn={{ xs: 'span 12', xl: 'span 4' }} order={{ xs: 5 }}>
+        <Box gridColumn={{ xs: 'span 12', lg: 'span 4' }}>
           <RecentAlerts />
         </Box>
 
-        {/* Row 4: Event Log Table */}
-        <Box gridColumn={{ xs: 'span 12' }} order={{ xs: 6 }}>
+        {/* Row 4: Event Log (full width) */}
+        <Box gridColumn="span 12">
           <EventLog />
         </Box>
       </Box>

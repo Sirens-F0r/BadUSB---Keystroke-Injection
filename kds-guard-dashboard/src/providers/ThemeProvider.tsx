@@ -77,12 +77,13 @@ function buildLightTheme() {
       text: {
         primary: '#171821',
         secondary: '#4D4D59',
-        disabled: '#ACACB9',
+        disabled: '#6D6D7A',
       },
-      divider: '#EBEBF9',
+      divider: '#D9D9E3',
       action: {
         focus: '#3AB4A4',
-        disabled: '#ACACB9',
+        hover: 'rgba(0, 0, 0, 0.06)',
+        disabled: '#82818F',
       },
     },
     typography: {
@@ -114,6 +115,21 @@ function buildLightTheme() {
             '&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover': {
               background: '#ACACB9',
             },
+          },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            border: '1px solid #D9D9E3',
+            backgroundImage: 'none',
+          },
+        },
+      },
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           },
         },
       },
@@ -200,6 +216,21 @@ function buildDarkTheme() {
             '&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover': {
               background: '#00A391',
             },
+          },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            border: '1px solid #2B2B36',
+            backgroundImage: 'none',
+          },
+        },
+      },
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            boxShadow: 'none',
           },
         },
       },

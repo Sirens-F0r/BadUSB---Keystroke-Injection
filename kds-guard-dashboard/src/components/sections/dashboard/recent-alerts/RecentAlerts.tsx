@@ -29,7 +29,7 @@ const RecentAlerts = (): ReactElement => {
           sx={{ fontWeight: 600, fontSize: '0.7rem' }}
         />
       </Box>
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3, maxHeight: 380, overflow: 'auto' }}>
         <Stack gap={2}>
           {recentAlerts.map((alert) => {
             const config = severityConfig[alert.severity];

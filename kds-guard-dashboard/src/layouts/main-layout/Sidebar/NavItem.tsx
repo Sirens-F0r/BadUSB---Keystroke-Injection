@@ -15,7 +15,7 @@ const NavItem = ({ navItem, open }: { navItem: NavItemProps; open: boolean }) =>
       disablePadding
       sx={{
         display: 'block',
-        px: 5,
+        px: open ? 3 : 1.5,
         position: 'relative',
       }}
     >
@@ -41,7 +41,10 @@ const NavItem = ({ navItem, open }: { navItem: NavItemProps; open: boolean }) =>
           opacity: navItem.active ? 1 : 0.5,
           bgcolor: isActive ? (open ? 'primary.main' : 'background.paper') : 'transparent',
           borderRadius: 1,
-          mx: open ? 0 : 0.5,
+          justifyContent: open ? 'flex-start' : 'center',
+          px: open ? 2 : 1,
+          py: 1,
+          minHeight: 40,
           '&:hover': {
             bgcolor: isActive
               ? open
@@ -58,10 +61,10 @@ const NavItem = ({ navItem, open }: { navItem: NavItemProps; open: boolean }) =>
           sx={{
             width: 20,
             height: 20,
-            mr: open ? 'auto' : 0,
+            mr: open ? 2 : 0,
             color: isActive
               ? open
-                ? 'background.default'
+                ? 'common.white'
                 : 'primary.main'
               : 'text.primary',
             minWidth: 'unset',
@@ -74,8 +77,12 @@ const NavItem = ({ navItem, open }: { navItem: NavItemProps; open: boolean }) =>
           sx={{
             display: open ? 'inline-block' : 'none',
             opacity: open ? 1 : 0,
-            color: isActive ? 'background.default' : '',
-            ml: open ? 2 : 0,
+            color: isActive ? 'common.white' : '',
+            ml: 0,
+            '& .MuiListItemText-primary': {
+              fontSize: '0.85rem',
+              whiteSpace: 'nowrap',
+            },
           }}
         />
       </ListItemButton>

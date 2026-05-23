@@ -37,8 +37,8 @@ const RiskScore = (): ReactElement => {
   }, [chartRef]);
 
   return (
-    <Paper sx={{ p: 3, borderRadius: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+    <Paper sx={{ p: 3, borderRadius: 3, height: 1, display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Typography variant="h5" color="text.primary" fontWeight={600}>
           Điểm rủi ro
         </Typography>
@@ -83,7 +83,7 @@ const RiskScore = (): ReactElement => {
           Tấn công
         </Button>
       </Box>
-      <Typography variant="body2" color="text.disabled" mb={2}>
+      <Typography variant="body2" color="text.disabled" mb={1}>
         Hiện tại:{' '}
         <Typography component="span" color={scoreColor(cur)} fontWeight={700}>
           {cur.toFixed(2)}
@@ -94,7 +94,7 @@ const RiskScore = (): ReactElement => {
         chartRef={chartRef}
         data={riskScore.history}
         labels={riskScore.labels}
-        sx={{ height: '181px !important', flexGrow: 1 }}
+        sx={{ height: '220px !important', flexGrow: 1 }}
       />
     </Paper>
   );

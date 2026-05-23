@@ -1,4 +1,7 @@
-import {
+const fs = require('fs');
+const path = require('path');
+
+const content = `import {
     app,
     BrowserWindow,
     Tray,
@@ -226,7 +229,7 @@ function showDetectionNotification(
     if (Notification.isSupported()) {
         const notification = new Notification({
             title: isHigh ? 'KDS GUARD - PHAT HIEN TAN CONG!' : 'KDS Guard - Canh bao',
-            body: 'Muc: ' + riskLevel + ' (' + riskScore + '%)\nLy do: ' + reasons.join(', '),
+            body: 'Muc: ' + riskLevel + ' (' + riskScore + '%)\\nLy do: ' + reasons.join(', '),
             urgency: isHigh ? 'critical' : 'normal',
             silent: false,
         });
@@ -239,14 +242,14 @@ function showDetectionNotification(
 function getConnectedDevices(): string {
     try {
         const output = execSync(
-            `powershell -NoProfile -Command "Get-PnpDevice -Class Keyboard,HIDClass,HidDevice -Status OK | Select-Object FriendlyName, InstanceId, Status | ConvertTo-Json -Compress"`,
+            \`powershell -NoProfile -Command "Get-PnpDevice -Class Keyboard,HIDClass,HidDevice -Status OK | Select-Object FriendlyName, InstanceId, Status | ConvertTo-Json -Compress"\`,
             { encoding: 'utf-8', timeout: 10000, windowsHide: true },
         );
         return output;
     } catch {
         try {
             const output = execSync(
-                `powershell -NoProfile -Command "Get-WmiObject Win32_Keyboard | Select-Object Name, DeviceID, Status | ConvertTo-Json -Compress"`,
+                \`powershell -NoProfile -Command "Get-WmiObject Win32_Keyboard | Select-Object Name, DeviceID, Status | ConvertTo-Json -Compress"\`,
                 { encoding: 'utf-8', timeout: 10000, windowsHide: true },
             );
             return output;
@@ -269,7 +272,7 @@ ipcMain.on(
 ipcMain.handle('block-usb-device', async (_event, instanceId: string): Promise<{ success: boolean; message: string }> => {
     try {
         execSync(
-            `powershell -NoProfile -Command "Disable-PnpDevice -InstanceId '${instanceId}' -Confirm:\$False -ErrorAction SilentlyContinue"`,
+            \`powershell -NoProfile -Command "Disable-PnpDevice -InstanceId '\${instanceId}' -Confirm:\\$False -ErrorAction SilentlyContinue"\`,
             { windowsHide: true, timeout: 10000 },
         );
         return { success: true, message: 'Da vo hieu hoa thiet bi USB' };
@@ -281,7 +284,7 @@ ipcMain.handle('block-usb-device', async (_event, instanceId: string): Promise<{
 ipcMain.handle('unblock-usb-device', async (_event, instanceId: string): Promise<{ success: boolean; message: string }> => {
     try {
         execSync(
-            `powershell -NoProfile -Command "Enable-PnpDevice -InstanceId '${instanceId}' -Confirm:\$False -ErrorAction SilentlyContinue"`,
+            \`powershell -NoProfile -Command "Enable-PnpDevice -InstanceId '\${instanceId}' -Confirm:\\$False -ErrorAction SilentlyContinue"\`,
             { windowsHide: true, timeout: 10000 },
         );
         return { success: true, message: 'Da khoi phuc thiet bi USB' };
@@ -331,3 +334,39 @@ app.on('window-all-closed', () => { });
 app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
+`;
+
+// Try to find the correct path
+const possiblePaths = [
+    'C:/Users/LOQ/OneDrive/Ứng dụng/Tài liệu/DOANCOSO/kds-guard-dashboard/electron/main.ts',
+    'C:/Users/LOQ/OneDrive/Tài liệu/DOANCOSO/kds-guard-dashboard/electron/main.ts',
+    './electron/main.ts',
+    '../electron/main.ts',
+    '../../electron/main.ts',
+];
+
+let targetPath = null;
+for (const p of possiblePaths) {
+    try {
+        if (fs.existsSync(p)) {
+            targetPath = p;
+            break;
+        }
+    } catch {}
+}
+
+if (!targetPath) {
+    // Try node process.argv to find cwd
+    const cwd = process.cwd();
+    targetPath = path.join(cwd, 'electron', 'main.ts');
+    if (!fs.existsSync(targetPath)) {
+        targetPath = path.join(cwd, '..', 'electron', 'main.ts');
+    }
+    if (!fs.existsSync(targetPath)) {
+        targetPath = path.join(cwd, '..', '..', 'electron', 'main.ts');
+    }
+}
+
+console.log('Writing to:', targetPath);
+fs.writeFileSync(targetPath, content, 'utf8');
+console.log('Done! File size:', fs.statSync(targetPath).size, 'bytes');

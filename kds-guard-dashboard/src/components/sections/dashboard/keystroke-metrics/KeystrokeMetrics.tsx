@@ -27,7 +27,7 @@ const KeystrokeMetrics = (): ReactElement => {
   }, [chartRef]);
 
   return (
-    <Paper sx={{ p: 3, borderRadius: 3 }}>
+    <Paper sx={{ p: 3, borderRadius: 3, height: 1, display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Typography variant="h5" color="text.primary" fontWeight={600}>
           So sánh hành vi gõ
@@ -45,7 +45,7 @@ const KeystrokeMetrics = (): ReactElement => {
       </Box>
       <KeystrokeMetricsChart
         chartRef={chartRef}
-        sx={{ height: '220px !important', flexGrow: 1 }}
+        sx={{ height: '300px !important', flexGrow: 1 }}
         data={keystrokeMetrics}
       />
     </Paper>

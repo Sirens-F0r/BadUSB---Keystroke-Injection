@@ -85,8 +85,8 @@ const RiskScoreChart = ({ chartRef, data, labels, sx }: RiskScoreChartProps) => 
         },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(0, 146, 126, 0.3)' },
-            { offset: 1, color: 'rgba(0, 146, 126, 0.02)' },
+            { offset: 0, color: theme.palette.mode === 'dark' ? 'rgba(0, 146, 126, 0.3)' : 'rgba(58, 180, 164, 0.2)' },
+            { offset: 1, color: theme.palette.mode === 'dark' ? 'rgba(0, 146, 126, 0.02)' : 'rgba(58, 180, 164, 0.01)' },
           ]),
         },
       },
